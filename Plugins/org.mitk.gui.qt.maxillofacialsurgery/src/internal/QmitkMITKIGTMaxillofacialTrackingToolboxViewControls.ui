@@ -499,7 +499,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                    </layout>
                  </item>
-                 <item>
+                 <!-- <item>
                    <layout class="QHBoxLayout" name="horizontalLayout_22">
                      <item>
                        <widget class="QLabel" name="label_22">
@@ -539,7 +539,7 @@ p, li { white-space: pre-wrap; }
                        </widget>
                      </item>
                    </layout>
-                 </item>
+                 </item>-->
                </layout>
              </widget>
            </item>
@@ -602,7 +602,7 @@ p, li { white-space: pre-wrap; }
                      </item>
                    </layout>
                  </item>
-                 <item>
+                 <!--<item>
                    <layout class="QHBoxLayout" name="horizontalLayout_25">
                      <item>
                        <widget class="QCheckBox" name="m_ImageActive">
@@ -638,7 +638,7 @@ p, li { white-space: pre-wrap; }
                        </widget>
                      </item>
                    </layout>
-                 </item>
+                 </item>-->
                </layout>
              </widget>
            </item>
@@ -759,7 +759,7 @@ p, li { white-space: pre-wrap; }
                   </item>
                 </layout>
               </item>
-              <item>
+              <!--<item>
                 <layout class="QHBoxLayout" name="horizontalLayout_37">
                   <item>
                     <widget class="QCheckBox" name="m_TargetImage">
@@ -795,7 +795,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                   </item>
                 </layout>
-              </item>
+              </item>-->
             </layout>
           </widget>
         </item>
@@ -872,7 +872,7 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
   </widget>
-     <widget class="QWidget" name="tab_4">
+      <!--  <widget class="QWidget" name="tab_4">
       <attribute name="title">
        <string>Camera View</string>
       </attribute>
@@ -1035,8 +1035,8 @@ p, li { white-space: pre-wrap; }
      </widget>
    </item>
   </layout>
-  </widget>
-     <widget class="QWidget" name="tab_5">
+  </widget>-->
+      <widget class="QWidget" name="tab_5">
       <attribute name="title">
        <string>Logging</string>
       </attribute>
@@ -1254,7 +1254,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item>
+        <!-- <item>
         <widget class="QCheckBox" name="m_ShowToolQuaternions">
          <property name="text">
           <string>Show Tool Quaternions</string>
@@ -1274,7 +1274,7 @@ p, li { white-space: pre-wrap; }
           <string>Inverse mode (Quaternions are stored inverse)</string>
          </property>
         </widget>
-       </item>
+       </item>-->
        <item>
         <spacer name="verticalSpacer_62">
          <property name="orientation">
@@ -1290,7 +1290,7 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-  </widget>
+    </widget>
   </item>
   </layout>
  </widget>

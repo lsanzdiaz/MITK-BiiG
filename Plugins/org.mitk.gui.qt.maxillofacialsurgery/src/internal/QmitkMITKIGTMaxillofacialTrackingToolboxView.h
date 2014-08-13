@@ -134,7 +134,7 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	void OnInstrumentSelected();
 	
 	/* This method is called when the object marker is selected. It stores the navigation data of the object marker.*/
-	void OnObjectmarkerSelected();
+	//void OnObjectmarkerSelected();
 	
 	/* This method calculates the transform for the registration target -> image (tracking -> original image)*/
 	void OnCalculateRegistration();
@@ -161,7 +161,7 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 
 	/**************************Virtual camera view tab ************************************/
 	/** @brief This method activates the virtual camera.*/
-	void OnVirtualCamera(bool on);
+	//void OnVirtualCamera(bool on);
 
   protected:
 

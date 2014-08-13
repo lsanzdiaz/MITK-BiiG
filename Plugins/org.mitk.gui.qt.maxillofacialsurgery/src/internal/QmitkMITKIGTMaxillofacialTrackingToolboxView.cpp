@@ -126,11 +126,11 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	connect(m_Controls->m_UsePermanentRegistrationToggle, SIGNAL(toggled(bool)), this, SLOT(OnApplyRegistration(bool)));
 	connect(m_Controls->m_TrackingDeviceSelectionWidget, SIGNAL(NavigationDataSourceSelected(mitk::NavigationDataSource::Pointer)), this, SLOT(OnSetupNavigation()));
 	connect(m_Controls->m_UseAsPointerButton, SIGNAL(clicked()), this, SLOT(OnInstrumentSelected()));
-	connect(m_Controls->m_UseAsObjectmarkerButton, SIGNAL(clicked()), this, SLOT(OnObjectmarkerSelected()));
+	//connect(m_Controls->m_UseAsObjectmarkerButton, SIGNAL(clicked()), this, SLOT(OnObjectmarkerSelected()));
 	connect(m_Controls->m_RegistrationWidget, SIGNAL(AddedTrackingFiducial()), this, SLOT(OnAddRegistrationTrackingFiducial()));
 	connect(m_Controls->m_RegistrationWidget, SIGNAL(PerformFiducialRegistration()), this, SLOT(OnCalculateRegistration()));
 	connect(m_Controls->m_PointSetRecordCheckBox, SIGNAL(toggled(bool)), this, SLOT(OnPointSetRecording(bool)));
-	connect(m_Controls->m_ActivateNeedleView, SIGNAL(toggled(bool)), this, SLOT(OnVirtualCamera(bool)));
+	//connect(m_Controls->m_ActivateNeedleView, SIGNAL(toggled(bool)), this, SLOT(OnVirtualCamera(bool)));
 	
 	//create connection for saving transform into file
 	connect(m_Controls->m_ChooseTransformFile, SIGNAL(clicked()), this, SLOT(OnChooseTransformFileClicked()));
@@ -189,17 +189,21 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	m_Controls->m_ObjectComboBox->SetAutoSelectNewItems(false);
 	m_Controls->m_ObjectComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
 
-	m_Controls->m_ImageComboBox->SetDataStorage(this->GetDataStorage());
-	m_Controls->m_ImageComboBox->SetAutoSelectNewItems(false);
-	m_Controls->m_ImageComboBox->SetPredicate(mitk::NodePredicateDataType::New("Image"));
-  
 	m_Controls->m_TargetObjectComboBox->SetDataStorage(this->GetDataStorage());
 	m_Controls->m_TargetObjectComboBox->SetAutoSelectNewItems(false);
 	m_Controls->m_TargetObjectComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
 
+
+	/*This version does not include registration using an image, just with a surface or object*/
+	/*
+	m_Controls->m_ImageComboBox->SetDataStorage(this->GetDataStorage());
+	m_Controls->m_ImageComboBox->SetAutoSelectNewItems(false);
+	m_Controls->m_ImageComboBox->SetPredicate(mitk::NodePredicateDataType::New("Image"));
+  
+
 	m_Controls->m_TargetImageComboBox->SetDataStorage(this->GetDataStorage());
 	m_Controls->m_TargetImageComboBox->SetAutoSelectNewItems(false);
-	m_Controls->m_TargetImageComboBox->SetPredicate(mitk::NodePredicateDataType::New("Image"));
+	m_Controls->m_TargetImageComboBox->SetPredicate(mitk::NodePredicateDataType::New("Image"));*/
 	
   }
 }
@@ -278,9 +282,10 @@ if (this->m_toolStorage.IsNull())
   mitk::TrackingDevice::Pointer trackingDevice = this->m_Controls->m_configurationWidget->GetTrackingDevice();
   trackingDevice->SetData(m_TrackingDeviceData);
 
+  /*In this version this functionality has been left out of the solution*/
   //set device to rotation mode transposed becaus we are working with VNL style quaternions
-  if(m_Controls->m_InverseMode->isChecked())
-    trackingDevice->SetRotationMode(mitk::TrackingDevice::RotationTransposed);
+  /*if(m_Controls->m_InverseMode->isChecked())
+    trackingDevice->SetRotationMode(mitk::TrackingDevice::RotationTransposed);*/
 
   //Get Tracking Volume Data
   mitk::TrackingDeviceData data = mitk::DeviceDataUnspecified;
@@ -301,10 +306,11 @@ if (this->m_toolStorage.IsNull())
     return;
   }
 
+  /*In this version this functionality has been left out of the solution*/
   //set filter to rotation mode transposed becaus we are working with VNL style quaternions
-  if(m_Controls->m_InverseMode->isChecked())
+  /*if(m_Controls->m_InverseMode->isChecked())
     m_ToolVisualizationFilter->SetRotationMode(mitk::NavigationDataObjectVisualizationFilter::RotationTransposed);
-
+	*/
   //First check if the created object is valid
   if (m_TrackingDeviceSource.IsNull())
   {
@@ -511,8 +517,8 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnStartTracking()
     m_Controls->m_TrackingToolsStatusWidget->AddNavigationData(m_TrackingDeviceSource->GetOutput(i));
   }
   m_Controls->m_TrackingToolsStatusWidget->ShowStatusLabels();
-  if (m_Controls->m_ShowToolQuaternions->isChecked()) {m_Controls->m_TrackingToolsStatusWidget->SetShowQuaternions(true);}
-  else {m_Controls->m_TrackingToolsStatusWidget->SetShowQuaternions(false);}
+/*  if (m_Controls->m_ShowToolQuaternions->isChecked()) {m_Controls->m_TrackingToolsStatusWidget->SetShowQuaternions(true);}
+  else {m_Controls->m_TrackingToolsStatusWidget->SetShowQuaternions(false);}*/
 
   //add other device: VIRTUAL
   
@@ -826,7 +832,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 			/*Test:: If we wanted to move the surface*/
      		//connect filter to source
-			m_ToolVisualizationFilter->SetInput(1, this->m_ObjectmarkerNavigationData);
+			m_ToolVisualizationFilter->SetInput(1, m_TrackingDeviceSource->GetOutput());
 
 			//set representation object
 			m_ToolVisualizationFilter->SetRepresentationObject(1, this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData());
@@ -838,6 +844,8 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 	else //if off = disable the permanent registration
 	{
 		m_ToolVisualizationFilter->SetOffset(0, NULL);
+		m_ToolVisualizationFilter->SetInput(1, NULL);
+
 	}
 }
 
@@ -870,11 +878,14 @@ bool QmitkMITKIGTMaxillofacialTrackingToolboxView::CheckRegistrationInitializati
 		warningMessage = "No surface selected for registration.\nRegistration is not possible";
 		initializationErrorDetected = true;
 	}
-	else if (m_Controls->m_ImageActive->isChecked() && m_Controls->m_ImageComboBox->GetSelectedNode().IsNull())
+
+	/*This version does not include registration using an image, just with a surface or object*/
+
+	/*else if (m_Controls->m_ImageActive->isChecked() && m_Controls->m_ImageComboBox->GetSelectedNode().IsNull())
 	{
 		warningMessage = "No image selected for registration.\nRegistration is not possible";
 		initializationErrorDetected = true;
-	}
+	}*/
 	else if (imageFiducials.IsNull() || trackerFiducials.IsNull())
 	{
 		warningMessage = "Fiducial data objects not found. \n"
@@ -996,12 +1007,12 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAddRegistrationTrackingFidu
 		QMessageBox::warning(NULL, "IGTSurfaceTracker: Error", "Can not access Tracker Fiducials. Adding fiducial not possible!");
 }
 
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnObjectmarkerSelected()
+/*void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnObjectmarkerSelected()
 {
 	if (m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource().IsNotNull())
 	{
-		m_ObjectmarkerNavigationData = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource()->GetOutput(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
-		MITK_INFO << "Objectmarker rotation: " << m_ObjectmarkerNavigationData->GetOrientation();
+		//this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData()
+		m_ObjectmarkerNavigationData = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource()->GetOutput(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());		
 	}
 	else
 	{
@@ -1017,7 +1028,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnObjectmarkerSelected()
 	{
 		m_Controls->m_ObjectmarkerNameLabel->setText("<not available>");
 	}
-}
+}*/
 
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::MessageBox(std::string s)
@@ -1295,7 +1306,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::DisableOptionsButtons()
 {
     m_Controls->m_ShowTrackingVolume->setEnabled(false);
     m_Controls->m_UpdateRate->setEnabled(false);
-    m_Controls->m_ShowToolQuaternions->setEnabled(false);
+   // m_Controls->m_ShowToolQuaternions->setEnabled(false);
     m_Controls->m_OptionsUpdateRateLabel->setEnabled(false);
 }
 
@@ -1303,7 +1314,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::EnableOptionsButtons()
 {
     m_Controls->m_ShowTrackingVolume->setEnabled(true);
     m_Controls->m_UpdateRate->setEnabled(true);
-    m_Controls->m_ShowToolQuaternions->setEnabled(true);
+    //m_Controls->m_ShowToolQuaternions->setEnabled(true);
     m_Controls->m_OptionsUpdateRateLabel->setEnabled(true);
 }
 
@@ -1400,7 +1411,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPointSetRecording(bool reco
 
 //* @OnVirtualCamera allows the visualization from a camera perspective */
 
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnVirtualCamera(bool on)
+/*void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnVirtualCamera(bool on)
 {
 	if (m_Controls->m_CameraViewSelection->GetSelectedToolID() == -1)
 	{
@@ -1450,7 +1461,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnVirtualCamera(bool on)
 		m_Controls->m_ViewUpBox->setEnabled(true);
 	}
 	
-}
+}*/
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::SetFocus()
 {
