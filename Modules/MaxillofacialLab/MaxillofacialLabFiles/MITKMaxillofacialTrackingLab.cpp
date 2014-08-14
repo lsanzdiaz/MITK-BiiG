@@ -15,59 +15,19 @@ See LICENSE.txt or http://www.mitk.org for details.
 ===================================================================*/
 
 
-// Blueberry
-//#include <berryISelectionService.h>
-//#include <berryIWorkbenchWindow.h>
 
-// Qmitk
-#include "MITKIGTMaxillofacialTrackingLab.h"
-#include "QmitkStdMultiWidget.h"
-
-#include <QmitkNDIConfigurationWidget.h>
-#include <QmitkFiducialRegistrationWidget.h>
-#include <QmitkUpdateTimerWidget.h>
-#include <QmitkToolSelectionWidget.h>
-#include <QmitkToolTrackingStatusWidget.h>
-
-
-#include <mitkCone.h>
-#include <mitkIGTException.h>
-#include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateProperty.h>
-#include <mitkNodePredicateDataType.h>
-#include <itkVector.h>
-
-#include <vtkConeSource.h>
-#include <vtkTransform.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkAppendPolyData.h>
-#include <vtkPoints.h>
-
-// Qt
-#include <QMessageBox>
-#include <QIcon>
-#include <QPushButton>
-
-// vtk
-#include <mitkVtkResliceInterpolationProperty.h>
+// MITK Maxillofacial Tracking Lab
+#include "MITKMaxillofacialTrackingLab.h"
 
 /** @Constructor */
 
-MITKIGTMaxillofacialTrackingLab::MITKIGTMaxillofacialTrackingLab()
+MITKMaxillofacialTrackingLab::MITKMaxillofacialTrackingLab()
 {
-	m_Source = NULL;
-	m_PermanentRegistrationFilter = NULL;
-	m_Visualizer = NULL;
-	m_VirtualView = NULL;
-	m_PSRecordingPointSet = NULL;
-	m_PointSetRecording = false;
-	m_PermanentRegistration = false;
-	m_CameraView = false;
-	m_PermanentRegistrationSourcePoints = NULL;
+	
 }
 
 /** @Destructor */
-MITKIGTMaxillofacialTrackingLab::~MITKIGTMaxillofacialTrackingLab()
+MITKMaxillofacialTrackingLab::~MITKMaxillofacialTrackingLab()
 {
 
 }
@@ -75,7 +35,7 @@ MITKIGTMaxillofacialTrackingLab::~MITKIGTMaxillofacialTrackingLab()
 
 /** @CalculateRegistration uses a Point-Based Algorithm to calculate the registration transform and compute the error */
 
-void MITKIGTMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode)
+void MITKMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode)
 {
    /* retrieve fiducials from data storage */
   mitk::PointSet::Pointer imageFiducials = dynamic_cast<mitk::PointSet*>(m_ImageFiducialsDataNode->GetData());
@@ -95,15 +55,15 @@ void MITKIGTMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Poin
 
   /*here, the actual transform is computed */
 
-  m_transform = vtkSmartPointer<vtkLandmarkTransform>::New();
-  m_transform->SetSourceLandmarks(sourcePoints);
-  m_transform->SetTargetLandmarks(targetPoints);
-  m_transform->SetModeToRigidBody();
-  m_transform->Modified();
-  m_transform->Update();
+  m_RegistrationTransformVTK = vtkSmartPointer<vtkLandmarkTransform>::New();
+  m_RegistrationTransformVTK->SetSourceLandmarks(sourcePoints);
+  m_RegistrationTransformVTK->SetTargetLandmarks(targetPoints);
+  m_RegistrationTransformVTK->SetModeToRigidBody();
+  m_RegistrationTransformVTK->Modified();
+  m_RegistrationTransformVTK->Update();
   
   /*compute FRE of transform */
-  double FRE = ComputeFRE(trackerFiducials,imageFiducials,m_transform);
+  double m_FRE = ComputeFRE(trackerFiducials, imageFiducials, m_RegistrationTransformVTK);
   
   /* conversion from vtk back to itk/mitk data types */
 
@@ -112,7 +72,7 @@ void MITKIGTMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Poin
   itk::Matrix<double,3,3> rotationDouble = itk::Matrix<double,3,3>();
   itk::Vector<double,3> translationDouble = itk::Vector<double,3>();
 
-  vtkSmartPointer<vtkMatrix4x4> m = m_transform->GetMatrix();
+  vtkSmartPointer<vtkMatrix4x4> m = m_RegistrationTransformVTK->GetMatrix();
   for(int k=0; k<3; k++) for(int l=0; l<3; l++)
   {
     rotationFloat[k][l] = m->GetElement(k,l);
@@ -126,24 +86,34 @@ void MITKIGTMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Poin
   }
   /*Create affine transform 3D surface, accesible from other modules or plugins */
 
-  RegistrationTransform = mitk::AffineTransform3D::New();
-  RegistrationTransform->SetMatrix(rotationDouble);
-  RegistrationTransform->SetOffset(translationDouble);
+  m_RegistrationTransformITK = mitk::AffineTransform3D::New();
+  m_RegistrationTransformITK->SetMatrix(rotationDouble);
+  m_RegistrationTransformITK->SetOffset(translationDouble);
   
   return;
 }
 
-vtkSmartPointer<vtkLandmarkTransform> MITKIGTMaxillofacialTrackingLab::GetVTKTransform()
+vtkSmartPointer<vtkLandmarkTransform> MITKMaxillofacialTrackingLab::GetVTKRegistrationTransform()
 {
-	return m_transform;
+	return m_RegistrationTransformVTK;
 }
 
+mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistrationTransform()
+{
+	return m_RegistrationTransformITK;
+}
+
+double MITKMaxillofacialTrackingLab::GetRegistrationFRE()
+{
+
+	return m_FRE;
+}
 
 /** @ComputeFRE calculates de error given by the application of a registration transform */
 
-double MITKIGTMaxillofacialTrackingLab::ComputeFRE(mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform)
+double MITKMaxillofacialTrackingLab::ComputeFRE(mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform)
 {
-	FRE = 0;
+	m_FRE = 0;
 	if (trackerFiducials->GetSize() != ImageWorldFiducials->GetSize()) return -1;
 	
 	for (unsigned int i = 0; i < trackerFiducials->GetSize(); i++)
@@ -154,16 +124,16 @@ double MITKIGTMaxillofacialTrackingLab::ComputeFRE(mitk::PointSet::Pointer track
 			current_tracker_fiducial_point = transform->TransformPoint(trackerFiducials->GetPoint(i)[0], trackerFiducials->GetPoint(i)[1], trackerFiducials->GetPoint(i)[2]);
 		}
 		double cur_error_squared = current_tracker_fiducial_point.SquaredEuclideanDistanceTo(ImageWorldFiducials->GetPoint(i));
-		FRE += cur_error_squared;
+		m_FRE += cur_error_squared;
 	}
 
-	FRE = sqrt(FRE / (double)trackerFiducials->GetSize());
+	m_FRE = sqrt(m_FRE / (double)trackerFiducials->GetSize());
 
-	return FRE;
+	return m_FRE;
 }
 
-
-bool MITKIGTMaxillofacialTrackingLab::IsTransformDifferenceHigh(mitk::NavigationData::Pointer transformA, mitk::NavigationData::Pointer transformB, double euclideanDistanceThreshold, double angularDifferenceThreshold)
+/*
+bool MITKMaxillofacialTrackingLab::IsTransformDifferenceHigh(mitk::NavigationData::Pointer transformA, mitk::NavigationData::Pointer transformB, double euclideanDistanceThreshold, double angularDifferenceThreshold)
 {
   if(transformA.IsNull() || transformA.IsNull())
     {return false;}
@@ -204,6 +174,6 @@ bool MITKIGTMaxillofacialTrackingLab::IsTransformDifferenceHigh(mitk::Navigation
 
   return false;
 }
-
+*/
 
 

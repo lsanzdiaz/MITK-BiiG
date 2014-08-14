@@ -40,8 +40,6 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <mitkNodePredicateProperty.h>
 #include <mitkNavigationToolStorageSerializer.h>
 
-#include "MITKIGTMaxillofacialTrackingLab.h"
-
 // vtk
 #include <vtkSphereSource.h>
 #include <vtkConeSource.h>
@@ -69,7 +67,7 @@ QmitkMITKIGTMaxillofacialTrackingToolboxView::QmitkMITKIGTMaxillofacialTrackingT
   //Initialize logging elements
   m_logging = false;
   m_loggedFrames = 0;
-  m_MaxillofacialTrackingLab = new MITKIGTMaxillofacialTrackingLab;
+  m_MaxillofacialTrackingLab = new MITKMaxillofacialTrackingLab;
   
   //Initialize registration elements
   m_ImageFiducialsDataNode = NULL;
@@ -794,16 +792,16 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
 	if (!CheckRegistrationInitialization()) return;
 
 	m_MaxillofacialTrackingLab->CalculateRegistration(m_ImageFiducialsDataNode, m_TrackerFiducialsDataNode);
-	m_Controls->m_RegistrationWidget->SetQualityDisplayText("FRE: " + QString::number(m_MaxillofacialTrackingLab->FRE) + " mm");
+	m_Controls->m_RegistrationWidget->SetQualityDisplayText("FRE: " + QString::number(m_MaxillofacialTrackingLab->GetRegistrationFRE()) + " mm");
 	
 	//register tool on object (surface)
 
-	m_ToolVisualizationFilter->SetOffset(0, m_MaxillofacialTrackingLab->RegistrationTransform);
+	m_ToolVisualizationFilter->SetOffset(0, m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
 
 
 	//save transform to file
 	std::ofstream myfile;
-	vtkMatrix4x4 * matrix = m_MaxillofacialTrackingLab->GetVTKTransform()->GetMatrix();
+	vtkMatrix4x4 * matrix = m_MaxillofacialTrackingLab->GetVTKRegistrationTransform()->GetMatrix();
 	
 	std::cout << "Matrix: " << *matrix << std::endl;
 	
@@ -828,7 +826,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 		if (CheckRegistrationInitialization())
 		{
 			//first: apply permanent registration of tool
-			m_ToolVisualizationFilter->SetOffset(0, m_MaxillofacialTrackingLab->RegistrationTransform);
+			m_ToolVisualizationFilter->SetOffset(0, m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
 
 			/*Test:: If we wanted to move the surface*/
      		//connect filter to source
@@ -836,7 +834,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 			//set representation object
 			m_ToolVisualizationFilter->SetRepresentationObject(1, this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData());
-			m_ToolVisualizationFilter->SetOffset(1, m_MaxillofacialTrackingLab->RegistrationTransform);
+			m_ToolVisualizationFilter->SetOffset(1, m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
 
 		}		
 	}

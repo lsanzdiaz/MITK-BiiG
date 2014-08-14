@@ -19,17 +19,19 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 #include <berryISelectionListener.h>
 
-//#include <QmitkFunctionality.h>
 #include <QmitkAbstractView.h>
 
 #include "ui_QmitkMITKIGTMaxillofacialTrackingToolboxViewControls.h"
-#include "MITKIGTMaxillofacialTrackingLab.h"
+#include "MITKMaxillofacialTrackingLab.h"
 
 //mitk headers
 #include <mitkNavigationToolStorage.h>
 #include <mitkTrackingDeviceSource.h>
 #include <mitkNavigationDataObjectVisualizationFilter.h>
 #include <mitkNavigationDataRecorder.h>
+
+#include <mitkCameraVisualization.h>
+
 
 //QT headers
 #include <QTimer>
@@ -188,7 +190,7 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 
 	//************************ MEMBERS FOR THE TRACKING LAB *****************************************
 	/** @brief tracking lab object */
-	MITKIGTMaxillofacialTrackingLab *m_MaxillofacialTrackingLab;
+	MITKMaxillofacialTrackingLab *m_MaxillofacialTrackingLab;
 	
 	void CreateBundleWidgets(QWidget* parent);
 	

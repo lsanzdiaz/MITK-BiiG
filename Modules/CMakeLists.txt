@@ -50,7 +50,7 @@ set(module_dirs
     Python
     Persistence
     VtkShaders
-	IGTMaxillofacialLab
+	MaxillofacialLab
 )
 
 if(MITK_ENABLE_PIC_READER)
