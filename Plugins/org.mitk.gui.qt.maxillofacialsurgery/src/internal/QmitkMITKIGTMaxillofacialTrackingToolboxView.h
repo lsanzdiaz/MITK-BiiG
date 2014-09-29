@@ -23,14 +23,19 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 #include "ui_QmitkMITKIGTMaxillofacialTrackingToolboxViewControls.h"
 #include "MITKMaxillofacialTrackingLab.h"
+#include "QmitkMaxillofacialRemeshingWidget.h"
+#include "ui_QmitkMaxillofacialRemeshingWidget.h"
 
 //mitk headers
 #include <mitkNavigationToolStorage.h>
 #include <mitkTrackingDeviceSource.h>
 #include <mitkNavigationDataObjectVisualizationFilter.h>
 #include <mitkNavigationDataRecorder.h>
-
 #include <mitkCameraVisualization.h>
+
+//vtk headers
+#include <vtkSmartPointer.h>
+#include <vtkPolyData.h>
 
 
 //QT headers
@@ -126,6 +131,9 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 
     /** @brief This slot is called if the user cancels the creation of a new tool. */
     void OnAddSingleToolCanceled();
+
+
+	void OnObjectmarkerSelected();
 	
 	/**************************Registration tab ************************************/
 	
@@ -161,6 +169,9 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	/** @brief This method starts the PointSet recording.*/
 	void OnPointSetRecording(bool record);
 
+	/** @brief This method starts the Distance control.*/
+	void OnDistanceControl(bool distance_control);
+
 	/**************************Virtual camera view tab ************************************/
 	/** @brief This method activates the virtual camera.*/
 	//void OnVirtualCamera(bool on);
@@ -193,13 +204,16 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	MITKMaxillofacialTrackingLab *m_MaxillofacialTrackingLab;
 	
 	void CreateBundleWidgets(QWidget* parent);
-	
+	void CheckSurfaceCenter();
 	/** @brief This method save the image points and the target points
 	into the data storage object, so the registration can be made.*/
 	void InitializeRegistration();
 
 
 	bool CheckRegistrationInitialization();
+
+	bool IsTransformDifferenceHigh(mitk::NavigationData::Pointer transformA, mitk::NavigationData::Pointer transformB, double euclideanDistanceThreshold = .8, double angularDifferenceThreshold = .8);
+
 
 	/** @members for initial registration*/
 	mitk::DataNode::Pointer m_ImageFiducialsDataNode;
@@ -213,9 +227,12 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
    mitk::TrackingDeviceSource::Pointer m_TrackingDeviceSource; ///> member for the source of the IGT pipeline
    mitk::TrackingDeviceData m_TrackingDeviceData; ///> stores the tracking device data as long as this is not handled by the tracking device configuration widget
    mitk::NavigationDataObjectVisualizationFilter::Pointer m_ToolVisualizationFilter; ///> holds the tool visualization filter (second filter of the IGT pipeline)
+   mitk::NavigationDataObjectVisualizationFilter::Pointer m_PermanentRegistrationFilter; ///> holds the tool visualization filter (second filter of the IGT pipeline)
    mitk::NavigationDataRecorder::Pointer m_loggingFilter; ///> holds the logging filter if logging is on (third filter of the IGT pipeline)
+   mitk::NavigationData::Pointer m_T_MarkerRel;
+   mitk::NavigationData::Pointer m_T_ObjectReg;
+   mitk::NavigationData::Pointer m_ObjectmarkerNavigationDataLastUpdate; ///< this is the position of the object marker from the last call of update(); it is used to check the difference and decide if the visualization must be updated
 
-  
    /** @brief This method destroys the filter pipeline.*/
    void DestroyIGTPipeline();
    
@@ -238,7 +255,10 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
    /*members for the point set recording*/
    mitk::NavigationData::Pointer m_PointSetRecordingNavigationData;
    mitk::PointSet::Pointer m_PSRecordingPointSet;
+   mitk::PointSet::Pointer m_PSRegisteredLastPoint;
+   mitk::PointSet::Pointer m_DistanceLinePointSet;
    bool m_PointSetRecording;
+   bool m_DistanceControl;
    bool m_PermanentRegistration;
    bool m_CameraView;
    mitk::CameraVisualization::Pointer m_VirtualView;

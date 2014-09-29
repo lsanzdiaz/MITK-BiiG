@@ -1,7 +1,9 @@
 project(org_mitk_gui_qt_maxillofacialsurgery)
 
+include_directories(${CTK_INCLUDE_DIRS})
+
 MACRO_CREATE_MITK_CTK_PLUGIN(
   EXPORT_DIRECTIVE MAXILLOFACIALSURGERYTRACKING_EXPORT
   EXPORTED_INCLUDE_SUFFIXES src
-  MODULE_DEPENDS MitkQtWidgetsExt MitkIGT MitkIGTUI MitkMaxillofacialLab
+  MODULE_DEPENDS MitkQtWidgets MitkQtWidgetsExt MitkIGT MitkIGTUI MitkMaxillofacialLab
 )

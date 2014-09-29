@@ -50,6 +50,7 @@ set(module_dirs
     Python
     Persistence
     VtkShaders
+	ACVDMod
 	MaxillofacialLab
 )
 

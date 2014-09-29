@@ -5,15 +5,18 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   mitkPluginActivator.cpp
   QmitkMITKIGTMaxillofacialTrackingToolboxView.cpp
+  QmitkMaxillofacialRemeshingWidget.cpp
 )
 
 set(UI_FILES
   src/internal/QmitkMITKIGTMaxillofacialTrackingToolboxViewControls.ui
+  src/internal/QmitkMaxillofacialRemeshingWidget.ui
 )
 
 set(MOC_H_FILES
   src/internal/mitkPluginActivator.h
   src/internal/QmitkMITKIGTMaxillofacialTrackingToolboxView.h
+  src/internal/QmitkMaxillofacialRemeshingWidget.h
 )
 
 # list of resource files which can be used by the plug-in

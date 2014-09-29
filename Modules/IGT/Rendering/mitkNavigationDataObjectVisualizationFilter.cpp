@@ -158,8 +158,8 @@ void mitk::NavigationDataObjectVisualizationFilter::GenerateData()
       {
       mitk::AffineTransform3D::Pointer overallTransform = mitk::AffineTransform3D::New();
       overallTransform->SetIdentity();
-      overallTransform->Compose(offset);
-      overallTransform->Compose(affineTransform);
+	  overallTransform->Compose(affineTransform);
+      overallTransform->Compose(offset);      
       data->GetGeometry()->SetIndexToWorldTransform(overallTransform);
       }
     else

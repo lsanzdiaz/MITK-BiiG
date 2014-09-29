@@ -23,7 +23,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 MITKMaxillofacialTrackingLab::MITKMaxillofacialTrackingLab()
 {
-	
+	m_RegistrationTransformITK = mitk::AffineTransform3D::New();
 }
 
 /** @Destructor */
@@ -40,6 +40,8 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer
    /* retrieve fiducials from data storage */
   mitk::PointSet::Pointer imageFiducials = dynamic_cast<mitk::PointSet*>(m_ImageFiducialsDataNode->GetData());
   mitk::PointSet::Pointer trackerFiducials = dynamic_cast<mitk::PointSet*>(m_TrackerFiducialsDataNode->GetData());
+
+
 
    /* conversion to vtk data types (we will use the vtk landmark based transform) and
   convert point sets to vtk poly data*/
@@ -86,7 +88,7 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer
   }
   /*Create affine transform 3D surface, accesible from other modules or plugins */
 
-  m_RegistrationTransformITK = mitk::AffineTransform3D::New();
+  
   m_RegistrationTransformITK->SetMatrix(rotationDouble);
   m_RegistrationTransformITK->SetOffset(translationDouble);
   
@@ -132,48 +134,6 @@ double MITKMaxillofacialTrackingLab::ComputeFRE(mitk::PointSet::Pointer trackerF
 	return m_FRE;
 }
 
-/*
-bool MITKMaxillofacialTrackingLab::IsTransformDifferenceHigh(mitk::NavigationData::Pointer transformA, mitk::NavigationData::Pointer transformB, double euclideanDistanceThreshold, double angularDifferenceThreshold)
-{
-  if(transformA.IsNull() || transformA.IsNull())
-    {return false;}
-  mitk::Point3D posA,posB;
-  posA = transformA->GetPosition();
-  posB = transformB->GetPosition();
 
-
-  if(posA.EuclideanDistanceTo(posB) > euclideanDistanceThreshold)
-    {return true;}
-
-  double returnValue;
-  mitk::Quaternion rotA,rotB;
-  rotA = transformA->GetOrientation();
-  rotB = transformB->GetOrientation();
-
-  itk::Vector<double,3> point; //caution 5D-Tools: Vector must lie in the YZ-plane for a correct result.
-  point[0] = 0.0;
-  point[1] = 0.0;
-  point[2] = 100000.0;
-
-  rotA.normalize();
-  rotB.normalize();
-
-  itk::Matrix<double,3,3> rotMatrixA;
-  for(int i=0; i<3; i++) for(int j=0; j<3; j++) rotMatrixA[i][j] = rotA.rotation_matrix_transpose().transpose()[i][j];
-
-  itk::Matrix<double,3,3> rotMatrixB;
-  for(int i=0; i<3; i++) for(int j=0; j<3; j++) rotMatrixB[i][j] = rotB.rotation_matrix_transpose().transpose()[i][j];
-
-  itk::Vector<double,3> pt1 = rotMatrixA * point;
-  itk::Vector<double,3> pt2 = rotMatrixB * point;
-
-  returnValue = (pt1[0]*pt2[0]+pt1[1]*pt2[1]+pt1[2]*pt2[2]) / ( sqrt(pow(pt1[0],2.0)+pow(pt1[1],2.0)+pow(pt1[2],2.0)) * sqrt(pow(pt2[0],2.0)+pow(pt2[1],2.0)+pow(pt2[2],2.0)));
-  returnValue = acos(returnValue);
-
-  if(returnValue*57.3 > angularDifferenceThreshold){return true;}
-
-  return false;
-}
-*/
 
 

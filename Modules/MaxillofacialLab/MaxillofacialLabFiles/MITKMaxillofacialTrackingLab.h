@@ -64,8 +64,7 @@ private:
 	* Checks if the difference between two given transformations is high which means the method returns
 	* true if the difference exeeds the given position and angular threshold.
 	*/
-	//bool IsTransformDifferenceHigh(mitk::NavigationData::Pointer transformA, mitk::NavigationData::Pointer transformB, double euclideanDistanceThreshold = .8, double angularDifferenceThreshold = .8);
-
+	
 };
 
 #endif // MITKMaxillofacialTrackingLab_h
