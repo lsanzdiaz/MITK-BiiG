@@ -43,11 +43,13 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include "MitkContourModelExports.h"
 
 
+
 // vtk
 #include <vtkSphereSource.h>
 #include <vtkConeSource.h>
 #include <vtkLineSource.h>
 #include <vtkMatrix4x4.h>
+#include <vtkColorTransferFunction.h>
 #include "mitkCone.h"
 
 
@@ -91,6 +93,12 @@ QmitkMITKIGTMaxillofacialTrackingToolboxView::QmitkMITKIGTMaxillofacialTrackingT
   m_CameraView = false;
   m_VirtualTracking = false;
   m_VirtualView = NULL;
+
+  m_ThereIsAReference = false;
+  m_ReferenceMarkerChecked = false;
+  m_Reference_Orientation_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+  m_Original_Reference_Orientation_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+  m_TotalOrientationTransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 }
 
 QmitkMITKIGTMaxillofacialTrackingToolboxView::~QmitkMITKIGTMaxillofacialTrackingToolboxView()
@@ -124,8 +132,12 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	connect(m_Controls->m_configurationWidget, SIGNAL(TrackingDeviceSelectionChanged()), this, SLOT(OnTrackingDeviceChanged()));
 	connect(m_Controls->m_VolumeSelectionBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(OnTrackingVolumeChanged(QString)));
 	connect(m_Controls->m_ShowTrackingVolume, SIGNAL(clicked()), this, SLOT(OnShowTrackingVolumeChanged()));
+	//connect(m_Controls->m_FastConfiguration, SIGNAL(clicked()), this, SLOT(OnFastConfiguration()));
 	connect(m_Controls->m_AutoDetectTools, SIGNAL(clicked()), this, SLOT(OnAutoDetectTools()));
 	connect(m_Controls->m_ResetTools, SIGNAL(clicked()), this, SLOT(OnResetTools()));
+
+
+	connect(m_Controls->m_ToolIsReferenceMarker, SIGNAL(toggled(bool)), this, SLOT(OnSetAsReferenceMarker(bool)));
 
 	//added the option of performing virtual tracking
 	connect(m_Controls->m_PerformVirtualTracking, SIGNAL(toggled(bool)), this, SLOT(OnPerformVirtualTracking(bool)));
@@ -133,6 +145,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	//create connections for Registration tab
 	connect(m_Controls->m_UsePermanentRegistrationToggle, SIGNAL(toggled(bool)), this, SLOT(OnApplyRegistration(bool)));
 	connect(m_Controls->m_TrackingDeviceSelectionWidget, SIGNAL(NavigationDataSourceSelected(mitk::NavigationDataSource::Pointer)), this, SLOT(OnSetupNavigation()));
+	connect(m_Controls->m_TrackingDeviceSelectionWidget, SIGNAL(NavigationToolSelected(mitk::NavigationDataSource::Pointer)), this, SLOT(OnSetupTool()));
 	connect(m_Controls->m_UseAsPointerButton, SIGNAL(clicked()), this, SLOT(OnInstrumentSelected()));
 	connect(m_Controls->m_UseAsObjectmarkerButton, SIGNAL(clicked()), this, SLOT(OnObjectmarkerSelected()));
 	connect(m_Controls->m_RegistrationWidget, SIGNAL(AddedTrackingFiducial()), this, SLOT(OnAddRegistrationTrackingFiducial()));
@@ -140,7 +153,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	connect(m_Controls->m_PointSetRecordCheckBox, SIGNAL(toggled(bool)), this, SLOT(OnPointSetRecording(bool)));
 	connect(m_Controls->m_DistanceControlCheckBox, SIGNAL(toggled(bool)), this, SLOT(OnDistanceControl(bool)));
 	//connect(m_Controls->m_ActivateNeedleView, SIGNAL(toggled(bool)), this, SLOT(OnVirtualCamera(bool)));
-	
+	connect(m_Controls->m_TargetSurfaceComboBox, SIGNAL(OnSelectionChanged(const mitk::DataNode *)), this, SLOT(OnTargetSurfaceChanged(const mitk::DataNode *)));
 	//create connection for saving transform into file
 	connect(m_Controls->m_ChooseTransformFile, SIGNAL(clicked()), this, SLOT(OnChooseTransformFileClicked()));
 
@@ -203,14 +216,14 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	m_Controls->m_TransformFileName->setText(QDir::toNativeSeparators(QDir::homePath()) + QDir::separator() + "transform.csv");
 
 	//initialize Combo Boxes
-	m_Controls->m_ObjectComboBox->SetDataStorage(this->GetDataStorage());
-	m_Controls->m_ObjectComboBox->SetAutoSelectNewItems(false);
-	m_Controls->m_ObjectComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
+	//m_Controls->m_ObjectComboBox->SetDataStorage(this->GetDataStorage());
+	//m_Controls->m_ObjectComboBox->SetAutoSelectNewItems(false);
+	//m_Controls->m_ObjectComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
 
-	m_Controls->m_TargetObjectComboBox->SetDataStorage(this->GetDataStorage());
-	m_Controls->m_TargetObjectComboBox->SetAutoSelectNewItems(false);
-	m_Controls->m_TargetObjectComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
-
+	m_Controls->m_TargetSurfaceComboBox->SetDataStorage(this->GetDataStorage());
+	m_Controls->m_TargetSurfaceComboBox->SetAutoSelectNewItems(false);
+	m_Controls->m_TargetSurfaceComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
+	
 
 	m_Controls->m_RemeshingWidget->SetDataStorage(this->GetDataStorage());
 	
@@ -274,6 +287,8 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnResetTools()
   m_Controls->m_TrackingToolsStatusWidget->RemoveStatusLabels();
   QString toolLabel = QString("Loaded Tools: <none>");
   m_Controls->m_toolLabel->setText(toolLabel);
+  m_ThereIsAReference = false;
+  m_ReferenceMarkerChecked = false;
 }
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnConnect()
@@ -319,14 +334,18 @@ if (this->m_toolStorage.IsNull())
 
   //Create Navigation Data Source with the factory class
   mitk::TrackingDeviceSourceConfigurator::Pointer myTrackingDeviceSourceFactory = mitk::TrackingDeviceSourceConfigurator::New(this->m_toolStorage,trackingDevice);
+
   m_TrackingDeviceSource = myTrackingDeviceSourceFactory->CreateTrackingDeviceSource();
+  
 
   m_ToolVisualizationFilter = mitk::NavigationDataObjectVisualizationFilter::New();
   
+  std::cout << "Number of outputs in tracking device source: " << m_TrackingDeviceSource->GetNumberOfIndexedOutputs() << endl;
 
   for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfIndexedOutputs(); i++)
   {
 	  mitk::NavigationTool::Pointer currentTool = this->m_toolStorage->GetToolByName(m_TrackingDeviceSource->GetOutput(i)->GetName());
+	  std::cout << "Tool Name" << m_TrackingDeviceSource->GetOutput(i)->GetName() << endl;
 	  if (currentTool.IsNull())
 	  {
 		  MessageBox("Error: did not find correspondig tool in tracking device after initialization.");
@@ -356,6 +375,7 @@ if (this->m_toolStorage.IsNull())
 
   MITK_INFO << "Number of tools: " << m_TrackingDeviceSource->GetNumberOfOutputs();
 
+  std::cout << "Number of tools: " << m_TrackingDeviceSource->GetNumberOfOutputs() << endl;
   //The tools are maybe reordered after initialization, e.g. in case of auto-detected tools of NDI Aurora
   mitk::NavigationToolStorage::Pointer toolsInNewOrder = myTrackingDeviceSourceFactory->GetUpdatedNavigationToolStorage();
   if ((toolsInNewOrder.IsNotNull()) && (toolsInNewOrder->GetToolCount() > 0))
@@ -395,30 +415,6 @@ if (this->m_toolStorage.IsNull())
   m_Controls->m_TrackingControlLabel->setText("Status: connected");
   }
 
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::CheckSurfaceCenter()
-{
-	mitk::Surface::ConstPointer surface = static_cast<mitk::Surface*>(this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData());
-	mitk::Geometry3D::Pointer g = surface->GetGeometry();
-	
-	mitk::PointSet::Pointer SurfacePointSet;
-	std::cout << "Surface center: " << g->GetCenter() << std::endl;
-	SurfacePointSet = NULL;
-	SurfacePointSet = mitk::PointSet::New();
-
-	SurfacePointSet->InsertPoint(0, g->GetCenter());
-
-	double scale[] = { 10.0, 10.0, 10.0 };
-	SurfacePointSet->GetGeometry()->SetSpacing(scale);
-	mitk::DataNode::Pointer SurfacePointsNode = mitk::DataNode::New(); 
-	SurfacePointsNode->SetData(SurfacePointSet);
-	SurfacePointsNode->SetName("Surface Points Node");
-	SurfacePointsNode->SetColor(0.0, 0.0, 1.0);
-	SurfacePointsNode->SetBoolProperty("show points", true);
-	// mapper will hide the start and end point
-	SurfacePointsNode->SetBoolProperty("show contour", false);
-	// more important: mapper will hide draw a line between all points in the set		
-	this->GetDataStorage()->Add(SurfacePointsNode);
-}
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnVirtualConnect()
 {
 	//build the Virtual IGT pipeline instead of the IGT pipeline for a real tracker device
@@ -457,9 +453,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnVirtualConnect()
 	//Tracking device data
 
 	VirtualTrackingDevice->SetData(m_TrackingDeviceData);
-
-	//CheckSurfaceCenter();
-
 	
 	try
 	{
@@ -599,18 +592,11 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnStartTracking()
   for(int i=0; i<m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
   {
     m_Controls->m_TrackingToolsStatusWidget->AddNavigationData(m_TrackingDeviceSource->GetOutput(i));
+	std::cout << "AddNavigationData, tool : " << i << endl;
   }
   m_Controls->m_TrackingToolsStatusWidget->ShowStatusLabels();
 
-  
-/*  if (m_Controls->m_ShowToolQuaternions->isChecked()) {m_Controls->m_TrackingToolsStatusWidget->SetShowQuaternions(true);}
-  else {m_Controls->m_TrackingToolsStatusWidget->SetShowQuaternions(false);}*/
 
-  //add other device: VIRTUAL
-  
-
-
-  //show tracking volume
   this->OnTrackingVolumeChanged(m_Controls->m_VolumeSelectionBox->currentText());
 
   //enable/disable Buttons
@@ -868,10 +854,13 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupNavigation()
 		MITK_WARN << "IGTSurfaceTracker: Error", "can not access DataStorage. Navigation not possible";
 		return;
 	}
-
-	//Building up the filter pipeline
 	InitializeRegistration();
 
+}
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupTool()
+{
+		
 }
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
@@ -892,17 +881,11 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
 	m_TrackerFiducialsDataNode->GetData()->GetTimeGeometry()->Update();
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 
-	//############### object is transformed ##########################
-	//save transform
-	//m_T_ObjectReg = mitk::NavigationData::New(m_MaxillofacialTrackingLab->GetITKRegistrationTransform()); // this is stored in a member because it is needed for permanent registration later on
 
-	//transform surface
-	//if (m_Controls->m_SurfaceActive->isChecked() && m_Controls->m_ObjectComboBox->GetSelectedNode().IsNotNull())
-	//{
-	//	m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData()->GetGeometry()->SetIndexToWorldTransform(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-	//}
-	//################################################################
-	
+	m_Controls->m_UsePermanentRegistrationToggle->setEnabled(true);
+
+
+
 	//save transform to file
 	std::ofstream myfile;
 	
@@ -923,6 +906,20 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
 	}	
 }
 
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetAsReferenceMarker(bool on)
+{
+	if (on)
+	{
+		m_ReferenceMarkerChecked = true;
+	}
+
+	else
+	{
+		m_ReferenceMarkerChecked = false;
+	}
+
+}
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 {
 	if (on)
@@ -934,39 +931,27 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 			return;
 		}
 
-		
-		/*for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfIndexedOutputs(); i++)
+		for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
 		{
-			mitk::NavigationTool::Pointer currentTool = this->m_toolStorage->GetToolByName(m_TrackingDeviceSource->GetOutput(i)->GetName());
-			if (currentTool.IsNull())
-			{
-				MessageBox("Error: did not find correspondig tool in tracking device after initialization.");
-				return;
-			}
+			m_TotalOrientationTransform->SetIdentity();
+			m_TotalOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
+			m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
+		}
 
-			m_ToolVisualizationFilter->SetOffset(i, m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-			m_ToolVisualizationFilter->SetInput(i, m_TrackingDeviceSource->GetOutput(i));
-			m_ToolVisualizationFilter->SetRepresentationObject(i, currentTool->GetDataNode()->GetData());
-			m_ToolVisualizationFilter->Modified();
-		
-		}	*/
-
-		//m_ToolVisualizationFilter->SetInput(0, m_TrackingDeviceSource->GetOutput());
-		m_ToolVisualizationFilter->SetOffset(0, m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-		std::cout << "Transform Matrix: " << m_ToolVisualizationFilter->GetOutput() << std::endl;
-		std::cout << "Transform Matrix: " << m_ToolVisualizationFilter->GetOffset(0)->GetMatrix() << std::endl;
-		std::cout << "Transform Offset: " << m_ToolVisualizationFilter->GetOffset(0)->GetOffset() << std::endl;
-		//m_ToolVisualizationFilter->SetRepresentationObject(0, this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData());
-		//m_ToolVisualizationFilter->Modified();
-		
 		m_ToolVisualizationFilter->Update();
 
-		if (m_PSRegisteredLastPoint.IsNotNull())
+		if (m_ThereIsAReference)
+		{
+			m_Original_Reference_Orientation = m_ToolVisualizationFilter->GetOutput(m_Reference_Index)->GetAffineTransform3D();
+			m_Original_Reference_Orientation->GetInverse(m_Original_Reference_Orientation_Inverse);
+		}
+		
+		//if there is already
+		if (m_PSRecordingPointSet.IsNotNull())
 		{
 			m_PSRecordingPointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
 		}
-
-		
+	
 		if (m_PSRegisteredLastPoint.IsNull())
 		{
 			m_PSRegisteredLastPoint = mitk::PointSet::New();
@@ -978,25 +963,9 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 		mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 		
-		//m_TrackingDeviceSource->StartTracking();
-		/*
-
-		m_ToolVisualizationFilter->SetOffset(0, m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-		m_ToolVisualizationFilter->Modified();
-			
-			std::cout << "Transform Matrix: " << m_ToolVisualizationFilter->GetOffset(0)->GetMatrix() << std::endl;
-			std::cout << "Transform Offset: " << m_ToolVisualizationFilter->GetOffset(0)->GetOffset() << std::endl;
-			
-		//transform surface
-		if (m_Controls->m_ObjectComboBox->GetSelectedNode().IsNotNull())
-		{
-			m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData()->GetGeometry()->SetIndexToWorldTransform(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-			m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData()->GetTimeGeometry()->Update();
-		}	*/
-
 		//some general stuff
 		m_PermanentRegistration = true;
-		m_ObjectmarkerNavigationDataLastUpdate = mitk::NavigationData::New();
+		
 	}
 
 	else //if off = disable the permanent registration
@@ -1004,11 +973,31 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 		//stop permanent registration
 		m_PermanentRegistration = false;
 
-		//restore old registration
-		if (m_T_ObjectReg.IsNotNull()) { this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData()->GetGeometry()->SetIndexToWorldTransform(m_T_ObjectReg->GetAffineTransform3D()); }
+		
+		for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
+		{
+		   m_ToolVisualizationFilter->SetOffset(i, NULL);
+		}
+
+		m_ToolVisualizationFilter->Update();
 
 		//delete filter
 		m_PermanentRegistrationFilter = NULL;
+
+
+		//Undo registration in Trajectory PointSet
+
+		if (m_PSRecordingPointSet.IsNotNull())
+		{
+			m_PSRecordingPointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse());
+		}
+
+		//Undo registration in distance line
+
+		if (m_DistanceLinePointSet.IsNotNull())
+		{
+			m_DistanceLinePointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse());
+		}
 	}
 }
 
@@ -1036,20 +1025,14 @@ bool QmitkMITKIGTMaxillofacialTrackingToolboxView::CheckRegistrationInitializati
 	/* We need to know if a surface or object has been selected, since after the registration the movement 
 	  of the tool will correspond to the movement of the object or surface in the image.*/
 
-	if (m_Controls->m_SurfaceActive->isChecked() && m_Controls->m_ObjectComboBox->GetSelectedNode().IsNull())
+	/*if (m_Controls->m_SurfaceActive->isChecked() && m_Controls->m_ObjectComboBox->GetSelectedNode().IsNull())
 	{
 		warningMessage = "No surface selected for registration.\nRegistration is not possible";
 		initializationErrorDetected = true;
-	}
-
-	/*This version does not include registration using an image, just with a surface or object*/
-
-	/*else if (m_Controls->m_ImageActive->isChecked() && m_Controls->m_ImageComboBox->GetSelectedNode().IsNull())
-	{
-		warningMessage = "No image selected for registration.\nRegistration is not possible";
-		initializationErrorDetected = true;
 	}*/
-	else if (imageFiducials.IsNull() || trackerFiducials.IsNull())
+
+	
+	if (imageFiducials.IsNull() || trackerFiducials.IsNull())
 	{
 		warningMessage = "Fiducial data objects not found. \n"
 			"Please set 3 or more fiducials in the image and with the tracking system.\n\n"
@@ -1128,9 +1111,22 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::InitializeRegistration()
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnInstrumentSelected()
 {
+	
 	if (m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource().IsNotNull())
 	{
-		m_InstrumentNavigationData = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource()->GetOutput(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
+		try
+		{
+			std::string tool_name = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationTool()->GetToolName();
+			//std::cout << "Selected Tool: " << m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationTool()->GetToolName() << std::endl;
+			m_InstrumentNavigationData = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource()->GetOutput(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
+
+		}
+
+		catch (...) //todo: change to mitk::IGTException
+		{
+			MessageBox("Could not select a navigation tool. Please select a tool from the navigation tool list.");
+			return;
+		}
 	}
 	else
 	{
@@ -1170,29 +1166,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAddRegistrationTrackingFidu
 		QMessageBox::warning(NULL, "IGTSurfaceTracker: Error", "Can not access Tracker Fiducials. Adding fiducial not possible!");
 }
 
-/*void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnObjectmarkerSelected()
-{
-	if (m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource().IsNotNull())
-	{
-		//this->m_Controls->m_ObjectComboBox->GetSelectedNode()->GetData()
-		m_ObjectmarkerNavigationData = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedNavigationDataSource()->GetOutput(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());		
-	}
-	else
-	{
-		m_Controls->m_ObjectmarkerNameLabel->setText("<not available>");
-		return;
-	}
-
-	if (m_ObjectmarkerNavigationData.IsNotNull())
-	{
-		m_Controls->m_ObjectmarkerNameLabel->setText(m_ObjectmarkerNavigationData->GetName());
-	}
-	else
-	{
-		m_Controls->m_ObjectmarkerNameLabel->setText("<not available>");
-	}
-}*/
-
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::MessageBox(std::string s)
   {
@@ -1204,94 +1177,142 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::MessageBox(std::string s)
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
   {
 	bool movement = false;
-	m_ToolVisualizationFilter->Update();
+	double min_dist;
 	
-	std::cout << "Tool Position: " << m_ToolVisualizationFilter->GetOutput(0)->GetPosition() << std::endl;
-
-	MITK_DEBUG << "Number of outputs ToolVisualizationFilter: " << m_ToolVisualizationFilter->GetNumberOfIndexedOutputs();
-	MITK_DEBUG << "Number of inputs ToolVisualizationFilter: " << m_ToolVisualizationFilter->GetNumberOfIndexedInputs();
-
-	if (m_logging)
+	//connect filter
+	std::cout << "Number of outputs: " << m_ToolVisualizationFilter->GetNumberOfOutputs() << endl;
+	
+	for (int i = 0; i<m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
 	{
-		this->m_loggingFilter->Update();
-		m_loggedFrames = this->m_loggingFilter->GetRecordCounter();
-		m_Controls->m_LoggedFramesLabel->setText("Logged Frames: "+QString::number(m_loggedFrames));
-		//check if logging stopped automatically
-		if((m_loggedFrames>1)&&(!m_loggingFilter->GetRecording()))
+		if (m_ThereIsAReference)
 		{
-			StopLogging();
+			itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer Current_Reference_Orientation = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+			Current_Reference_Orientation = m_ToolVisualizationFilter->GetOutput(m_Reference_Index)->GetAffineTransform3D();
+			
+			if (m_PermanentRegistration)
+			{
+				itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+				
+				matrix->SetIdentity();
+				matrix->Compose(m_Original_Reference_Orientation_Inverse);
+				matrix->Compose(Current_Reference_Orientation);
+				
+				matrix->GetInverse(m_Reference_Orientation_Inverse);
+				//Print Current_Reference_matrix
+				std::cout << "Current_Reference_matrix: " << matrix->GetMatrix() << endl;
+
+				m_TotalOrientationTransform->SetIdentity();
+				m_TotalOrientationTransform->Compose(m_Reference_Orientation_Inverse);
+	
+				m_TotalOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
+				m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
+				
+
+				std::cout << "Full Offset: " << m_TotalOrientationTransform->GetMatrix() << endl;
+
+			}
+		}
+	}
+
+	m_ToolVisualizationFilter->Update();
+	m_Controls->m_TrackingToolsStatusWidget->Refresh();
+	mitk::NavigationData::Pointer nd = m_PointSetRecordingNavigationData;
+	
+	if ((m_DistanceControl && m_DistanceLinePointSet.IsNotNull()) || (m_PointSetRecording && m_PSRecordingPointSet.IsNotNull()))
+	{
+		if (last_position.IsNotNull())
+		{
+			mitk::Point3D p = last_position->GetPosition();
+
+			if (!m_PermanentRegistration)
+			{
+				if (p.EuclideanDistanceTo(nd->GetPosition()) > (double)m_Controls->m_PSRecordingSpinBox->value())
+				{
+					movement = true;
+				}
+			}
+			else
+			{
+				m_PSRegisteredLastPoint->SetPoint(0, nd->GetPosition());
+				m_PSRegisteredLastPoint->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
+				m_PSRegisteredLastPoint->GetUpdatedGeometry();
+			
+				if (p.EuclideanDistanceTo(m_PSRegisteredLastPoint->GetPoint(0)) > (double)m_Controls->m_PSRecordingSpinBox->value())
+				{
+					movement = true;
+				}
+			}
+
+		}
+		else
+		{
+			last_position = mitk::NavigationData::New();
+			movement = true;
+		}
+
+		last_position->SetPosition(nd->GetPosition());
+	}
+
+	if (movement && m_PointSetRecording && m_PSRecordingPointSet.IsNotNull())
+	{
+		int size = m_PSRecordingPointSet->GetSize();
+
+	    if (!m_PermanentRegistration)
+		{
+			m_PSRecordingPointSet->InsertPoint(size, nd->GetPosition());
+		}
+		else
+		{
+			m_PSRecordingPointSet->InsertPoint(size, m_PSRegisteredLastPoint->GetPoint(0));
 		}
 	}
 	
-	m_Controls->m_TrackingToolsStatusWidget->Refresh();
-	
-	/*
-	if (m_CameraView && m_VirtualView.IsNotNull()) 
-	{ 
-		m_VirtualView->Update(); 
-	}*/
-
-	mitk::NavigationData::Pointer nd = m_PointSetRecordingNavigationData;
-	
-	if (m_PointSetRecording && m_PSRecordingPointSet.IsNotNull())
-	
-	{
-	  int size = m_PSRecordingPointSet->GetSize();
-	 
-	  if (size > 0)
-	  {
-		  mitk::Point3D p = m_PSRecordingPointSet->GetPoint(size - 1);
-		  
-		  if (!m_PermanentRegistration)
-		  {
-			  if (p.EuclideanDistanceTo(nd->GetPosition()) > (double)m_Controls->m_PSRecordingSpinBox->value())
-			  {
-				  movement = true;
-				  m_PSRecordingPointSet->InsertPoint(size, nd->GetPosition());
-			  }
-		  }
-		  else
-		  {
-			  m_PSRegisteredLastPoint->SetPoint(0, nd->GetPosition());
-			  m_PSRegisteredLastPoint->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-			  m_PSRegisteredLastPoint->GetUpdatedGeometry();
-			  std::cout << "Tool Position (registered): " << m_PSRegisteredLastPoint->GetPoint(0).GetElement(0) << m_PSRegisteredLastPoint->GetPoint(0).GetElement(1) << m_PSRegisteredLastPoint->GetPoint(0).GetElement(2) << std::endl;
-
-			  if (p.EuclideanDistanceTo(m_PSRegisteredLastPoint->GetPoint(0)) > (double)m_Controls->m_PSRecordingSpinBox->value())
-			  {
-				  movement = true;
-				  m_PSRecordingPointSet->InsertPoint(size, m_PSRegisteredLastPoint->GetPoint(0));
-			  }
-		  }
-	  }
-	  else
-	  {
-		  m_PSRecordingPointSet->InsertPoint(size, nd->GetPosition());
-		  movement = true;
-	  }
-	}
 
 	if (movement && m_DistanceControl && m_DistanceLinePointSet.IsNotNull())
 	{
 		if (!m_PermanentRegistration)
 		{
-			Distance_Data *distance_data = m_Controls->m_RemeshingWidget->ControlOfDistance(nd->GetPosition());
+			Distance_Data *distance_data = m_Controls->m_RemeshingWidget->RealTimeControlOfDistance(nd->GetPosition());
 			m_DistanceLinePointSet->SetPoint(0, nd->GetPosition());
 			m_DistanceLinePointSet->SetPoint(1, distance_data->closest_point);
 			m_DistanceLinePointSet->GetUpdatedGeometry();
 			QString distancestr = QString::number(distance_data->distance);
+			min_dist = distance_data->distance;
 			m_Controls->m_ToolDistanceToSurfaceWidget->setText(distancestr);
 		}
 		else
 		{
-			Distance_Data *distance_data = m_Controls->m_RemeshingWidget->ControlOfDistance(m_PSRegisteredLastPoint->GetPoint(0));
+			Distance_Data *distance_data = m_Controls->m_RemeshingWidget->RealTimeControlOfDistance(m_PSRegisteredLastPoint->GetPoint(0));
 			m_DistanceLinePointSet->SetPoint(0, m_PSRegisteredLastPoint->GetPoint(0));
 			m_DistanceLinePointSet->SetPoint(1, distance_data->closest_point);
 			m_DistanceLinePointSet->GetUpdatedGeometry();
 			QString distancestr = QString::number(distance_data->distance);
+			min_dist = distance_data->distance;
 			m_Controls->m_ToolDistanceToSurfaceWidget->setText(distancestr);
+
 		}
 	
+	}
+
+	if (movement && m_logging)
+	{
+		if (m_DistanceControl)
+		{
+			this->m_loggingFilter->Update(min_dist);
+		}
+		else
+		{
+			this->m_loggingFilter->Update();
+		}
+		m_loggedFrames = this->m_loggingFilter->GetRecordCounter();
+		m_Controls->m_LoggedFramesLabel->setText("Logged Frames: " + QString::number(m_loggedFrames));
+
+		//check if logging stopped automatically
+
+		if ((m_loggedFrames>1) && (!m_loggingFilter->GetRecording()))
+		{
+			StopLogging();
+		}
 	}
 
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
@@ -1408,8 +1429,14 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::StartLogging()
     if (m_Controls->m_LoggingLimit->isChecked()){m_loggingFilter->SetRecordCountLimit(m_Controls->m_LoggedFramesLimit->value());}
 
     //connect filter
-    for(int i=0; i<m_ToolVisualizationFilter->GetNumberOfOutputs(); i++){m_loggingFilter->AddNavigationData(m_ToolVisualizationFilter->GetOutput(i));}
+	std::cout << "Number of outputs: " << m_ToolVisualizationFilter->GetNumberOfOutputs() << endl;
+    for(int i=0; i<m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
+	
+	{
+		m_loggingFilter->AddNavigationData(m_ToolVisualizationFilter->GetOutput(i));
+	}
 
+	
     //start filter with try-catch block for exceptions
     try
     {
@@ -1448,11 +1475,17 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::StopLogging()
     }
   }
 
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnFastConfiguration()
+{
+}
+
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAddSingleTool()
   {
-  QString Identifier = "Tool#";
+
+  QString Identifier = "Tool";
   if (m_toolStorage.IsNotNull()) Identifier += QString::number(m_toolStorage->GetToolCount());
   else Identifier += "0";
+  
   m_Controls->m_NavigationToolCreationWidget->Initialize(GetDataStorage(),Identifier.toStdString());
   m_Controls->m_NavigationToolCreationWidget->SetTrackingDeviceType(m_Controls->m_configurationWidget->GetTrackingDevice()->GetType(),false);
   m_Controls->m_TrackingToolsWidget->setCurrentIndex(1);
@@ -1473,6 +1506,15 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAddSingleToolFinished()
     MITK_WARN << "No ToolStorage available, cannot add tool, aborting!";
     return;
     }
+  if (m_ReferenceMarkerChecked)
+  {
+	  m_ThereIsAReference = true;
+	  m_Reference_Index = m_toolStorage->GetToolCount();
+  }
+
+  m_ReferenceMarkerChecked = false;
+  m_Controls->m_ToolIsReferenceMarker->setChecked(false);
+  std::cout << "Tool index: " << m_toolStorage->GetToolCount() << endl;
   m_toolStorage->AddTool(m_Controls->m_NavigationToolCreationWidget->GetCreatedTool());
   m_Controls->m_TrackingToolsStatusWidget->PreShowTools(m_toolStorage);
   QString toolLabel = QString("Loaded Tools: <manually added>");
@@ -1607,25 +1649,28 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPointSetRecording(bool reco
 			dn->SetData(m_PSRecordingPointSet);
 			ds->Add(dn);
 		}
-		else
-		{
-			m_PSRecordingPointSet->Clear();
-		}
-
-		if (m_PSRegisteredLastPoint.IsNull())
-		{
-			m_PSRegisteredLastPoint = mitk::PointSet::New();
-		}
-
+		
 		m_PointSetRecording = true;	
 	
 	}
 
 	else
 	{
+
+		dn = ds->GetNamedNode("Recorded Points");
+		ds->RemoveNodeEvent(dn);
+		m_PSRecordingPointSet->Clear();
+		m_PSRecordingPointSet = NULL;
 	m_PointSetRecording = false;
 	}
 }
+
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnTargetSurfaceChanged(const mitk::DataNode *node)
+{
+
+}
+
 
 /** @OnPointSetRecording allows control of distance from the tracking tool to 
 the closest point on a selected surface */
@@ -1643,14 +1688,14 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnDistanceControl(bool distan
 		if (m_Controls->m_PointSetRecordingToolSelectionWidget->GetSelectedToolID() == -1)
 		{
 			QMessageBox::warning(NULL, "Error", "No tool selected for distance control!");
-			m_Controls->m_PointSetRecordCheckBox->setChecked(false);
+			m_Controls->m_DistanceControlCheckBox->setChecked(false);
 			return;
 		}
 
 		m_PointSetRecordingNavigationData = m_Controls->m_PointSetRecordingToolSelectionWidget->GetSelectedNavigationDataSource()->GetOutput(m_Controls->m_PointSetRecordingToolSelectionWidget->GetSelectedToolID());
-		m_PSRegisteredLastPoint->SetPoint(0, m_PointSetRecordingNavigationData->GetPosition());
+		/*m_PSRegisteredLastPoint->SetPoint(0, m_PointSetRecordingNavigationData->GetPosition());
 		m_PSRegisteredLastPoint->GetUpdatedGeometry();
-		m_PSRegisteredLastPoint->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
+		m_PSRegisteredLastPoint->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());*/
 
 		//initialize line that corresponds to minimum distance
 		psDistND = ds->GetNamedNode("Distance line");
@@ -1658,45 +1703,42 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnDistanceControl(bool distan
 		if (m_DistanceLinePointSet.IsNull() || psDistND.IsNull())
 		{
 			m_Controls->m_RemeshingWidget->SetRenderer(this->GetRenderWindowPart()->GetQmitkRenderWindow("3d")->GetVtkRenderWindow());
-			double* closest_point;
-			if (!m_PermanentRegistration)
-			{
-				closest_point = m_Controls->m_RemeshingWidget->CreateDistanceMatrix(m_PointSetRecordingNavigationData->GetPosition());
-			}
-			else
-			{
-				closest_point = m_Controls->m_RemeshingWidget->CreateDistanceMatrix(m_PSRegisteredLastPoint->GetPoint(0));
-			}
-			std::cout << "Closest point: " << *closest_point << std::endl;
-			m_DistanceLinePointSet = NULL;
+			
+			m_Controls->m_RemeshingWidget->InitiateDistanceControl(m_Controls->m_TargetSurfaceComboBox->GetSelectedNode());
+			
 			m_DistanceLinePointSet = mitk::PointSet::New();
 
 			m_DistanceLinePointSet->InsertPoint(0, m_PointSetRecordingNavigationData->GetPosition());
-			m_DistanceLinePointSet->InsertPoint(1, closest_point);
+			m_DistanceLinePointSet->InsertPoint(1, m_PointSetRecordingNavigationData->GetPosition());
 			
 			distanceNode->SetData(m_DistanceLinePointSet);
 			distanceNode->SetName("Distance line");
-			distanceNode->SetColor(1.0, 0.0, 0.0);
+			
 			distanceNode->SetBoolProperty("show points", true);
 			// mapper will hide the start and end point
 			distanceNode->SetBoolProperty("show contour", true);
 			// more important: mapper will hide draw a line between all points in the set	
 			distanceNode->SetOpacity(0.5);
-			
+			distanceNode->SetColor(0, 1, 0);
 			ds->Add(distanceNode);
-			
-		}
-		else
-		{
-			m_DistanceLinePointSet = NULL;
-		}
 
+		}
+		
+		
 		m_DistanceControl = true;
 
 	}
 
 	else
 	{
+		distanceNode = ds->GetNamedNode("Distance line");
+		ds->RemoveNodeEvent(distanceNode);
+
+		if (m_DistanceLinePointSet.IsNotNull())
+		{
+			m_DistanceLinePointSet->Clear();
+			m_DistanceLinePointSet = NULL;
+		}
 		m_DistanceControl = false;
 	}
 }

@@ -52,11 +52,17 @@ void CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mit
 vtkSmartPointer<vtkLandmarkTransform> GetVTKRegistrationTransform();
 /** @brief This method returns the registration transform in the ITK format.*/
 mitk::AffineTransform3D::Pointer GetITKRegistrationTransform();
+
+vtkSmartPointer<vtkLinearTransform> GetVTKRegistrationTransformInverse();
+mitk::AffineTransform3D::Pointer GetITKRegistrationTransformInverse();
+
 double GetRegistrationFRE();
 
 private:
 	vtkSmartPointer<vtkLandmarkTransform> m_RegistrationTransformVTK;
 	mitk::AffineTransform3D::Pointer m_RegistrationTransformITK;
+	mitk::AffineTransform3D::Pointer m_RegistrationTransformITK_Inverse;
+	vtkSmartPointer<vtkLinearTransform> m_RegistrationTransformVTK_Inverse;
 	double m_FRE;
 
 	double ComputeFRE(mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform = NULL);

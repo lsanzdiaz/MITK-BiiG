@@ -160,7 +160,7 @@ public:
 
     virtual void Update();
 
-
+	virtual void Update(double min_dist);
     /**Documentation
     * \brief Sets the recording mode which causes different types of output streams
     * see enum RecordingMode

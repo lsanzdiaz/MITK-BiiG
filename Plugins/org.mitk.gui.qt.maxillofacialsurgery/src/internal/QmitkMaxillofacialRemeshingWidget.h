@@ -32,6 +32,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include "mitkPointSet.h"
 #include <MITKMaxillofacialMeshLab.h>
 #include "mitkPointLocator.h"
+#include "vtkCellLocator.h"
 
 #include <vtkSmartPointer.h>
 #include <vtkDistancePolyDataFilter.h>
@@ -66,8 +67,8 @@ public:
   virtual ~QmitkMaxillofacialRemeshingWidget();
   void SetDataStorage(mitk::DataStorage::Pointer _DataStorage);
   void SetRenderer(vtkSmartPointer<vtkRenderWindow> _RenderWindow);
-  Distance_Data *ControlOfDistance(mitk::Point3D ToolNavigationPosition);
-  double *CreateDistanceMatrix(mitk::Point3D ToolNavigationPosition);
+  void InitiateDistanceControl(mitk::DataNode::Pointer node);
+  Distance_Data* RealTimeControlOfDistance(mitk::Point3D ToolNavigationPosition);
   
 protected slots:
   void OnAdvancedSettingsButtonToggled(bool toggled);
@@ -108,5 +109,6 @@ protected:
   vtkSmartPointer<vtkScalarBarActor> m_scalarBar;
 
   mitk::PointLocator::Pointer m_Locator;
+  vtkSmartPointer<vtkCellLocator> m_CellLocator;
 };
 #endif // _QmitkMaxillofacialRemeshing_H_INCLUDED

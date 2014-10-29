@@ -139,13 +139,14 @@ void QmitkNavigationToolCreationWidget::OnFinished()
     vtkConeSource *vtkData = vtkConeSource::New();
     vtkData->SetAngle(5.0);
     vtkData->SetResolution(50);
-    vtkData->SetHeight(6.0f);
-    vtkData->SetRadius(2.0f);
+    vtkData->SetHeight(40.0f);
+    vtkData->SetRadius(20.0f);
     vtkData->SetCenter(0.0, 0.0, 0.0);
     vtkData->Update();
     mySphere->SetVtkPolyData(vtkData->GetOutput());
     vtkData->Delete();
     newNode->SetData(mySphere);
+	newNode->SetColor(1, 1, 1);
   }
   else
   {

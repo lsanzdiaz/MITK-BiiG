@@ -46,6 +46,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <vtkIntersectionPolyDataFilter.h>
 #include <vtkArray.h>
 #include <vtkPointLocator.h>
+#include <vtkGenericCell.h>
 
 // C++ Standard Library
 #include <algorithm>
@@ -77,9 +78,9 @@ void QmitkMaxillofacialRemeshingWidget::SetDataStorage(mitk::DataStorage::Pointe
 			m_DataStorage = _DataStorage;
 			if (m_DataStorage.IsNotNull())
 			{
-				m_Controls->surfaceComboBox->SetDataStorage(m_DataStorage);
-				m_Controls->surfaceComboBox->SetAutoSelectNewItems(false);
-				m_Controls->surfaceComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
+				m_Controls->m_surfaceComboBox->SetDataStorage(m_DataStorage);
+				m_Controls->m_surfaceComboBox->SetAutoSelectNewItems(false);
+				m_Controls->m_surfaceComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
 			}		
 	}
 }
@@ -112,15 +113,15 @@ void QmitkMaxillofacialRemeshingWidget::CreateQtPartControl(QWidget* parent)
     m_Controls->setupUi(parent);
 
     this->CreateConnections();
-	this->EnableWidgets(m_Controls->surfaceComboBox->GetSelectedNode().IsNotNull());
+	this->EnableWidgets(m_Controls->m_surfaceComboBox->GetSelectedNode().IsNotNull());
 	this->OnAdvancedSettingsButtonToggled(false);
   }
 
-  this->OnSelectedSurfaceChanged(m_Controls->surfaceComboBox->GetSelectedNode());
+  this->OnSelectedSurfaceChanged(m_Controls->m_surfaceComboBox->GetSelectedNode());
 }
 void QmitkMaxillofacialRemeshingWidget::CreateConnections()
 {
-  connect(m_Controls->surfaceComboBox, SIGNAL(OnSelectionChanged(const mitk::DataNode *)), this, SLOT(OnSelectedSurfaceChanged(const mitk::DataNode *)));
+  connect(m_Controls->m_surfaceComboBox, SIGNAL(OnSelectionChanged(const mitk::DataNode *)), this, SLOT(OnSelectedSurfaceChanged(const mitk::DataNode *)));
   connect(m_Controls->numVerticesSlider, SIGNAL(valueChanged(int)), this, SLOT(OnNumberOfVerticesChanged(int)));
   connect(m_Controls->numVerticesSpinBox, SIGNAL(valueChanged(int)), this, SLOT(OnNumberOfVerticesChanged(int)));
   connect(m_Controls->gradationSlider, SIGNAL(valueChanged(double)), this, SLOT(OnGradationChanged(double)));
@@ -138,7 +139,7 @@ void QmitkMaxillofacialRemeshingWidget::CreateConnections()
 
 void QmitkMaxillofacialRemeshingWidget::EnableWidgets(bool enable)
 {
-	m_Controls->surfaceComboBox->setEnabled(enable);
+  m_Controls->m_surfaceComboBox->setEnabled(enable);
   m_Controls->numVerticesSlider->setEnabled(enable);
   m_Controls->numVerticesSpinBox->setEnabled(enable);
   m_Controls->gradationSlider->setEnabled(enable);
@@ -221,7 +222,7 @@ void QmitkMaxillofacialRemeshingWidget::OnOptimizationLevelChanged(int optimizat
 
 void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
 {
-  mitk::DataNode::Pointer selectedNode = m_Controls->surfaceComboBox->GetSelectedNode();
+  mitk::DataNode::Pointer selectedNode = m_Controls->m_surfaceComboBox->GetSelectedNode();
   mitk::Surface::ConstPointer surface = static_cast<mitk::Surface*>(selectedNode->GetData());
   int numVertices = m_Controls->numVerticesSpinBox->value();
   double gradation = m_Controls->gradationSpinBox->value();
@@ -236,13 +237,13 @@ void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
   
   
   mitk::Surface::Pointer mesh_surface = mitk::Surface::Pointer();
-  //sgroup = m_remesher->GenerateMeshWithMargin(surface, 0, numVertices, gradation, subsampling, edgeSplitting, optimizationLevel, forceManifold, boundaryFixing);
+ 
   mesh_surface = m_remesher->GenerateMesh(surface, 0, numVertices, gradation, subsampling, edgeSplitting, optimizationLevel, forceManifold, boundaryFixing);
 
   mitk::DataNode::Pointer newNode = mitk::DataNode::New();
   newNode->SetName(QString("%1 (%2, %3)").arg(selectedNode->GetName().c_str()).arg(mesh_surface->GetVtkPolyData()->GetNumberOfPoints()).arg(gradation).toStdString());
   newNode->SetProperty("material.representation", mitk::VtkRepresentationProperty::New(VTK_WIREFRAME));
-  //newNode->SetProperty("material.specularCoefficient", mitk::FloatProperty::New(0.0f));
+  newNode->SetProperty("material.specularCoefficient", mitk::FloatProperty::New(0.0f));
   newNode->SetData(mesh_surface);
 
   m_DataStorage->Add(newNode, selectedNode);
@@ -292,22 +293,9 @@ void QmitkMaxillofacialRemeshingWidget::SetNumberOfVertices(int minimum, int max
   m_Controls->maxNumVerticesLineEdit->setText(QString("%1").arg(maximum));
 }
 
-double* QmitkMaxillofacialRemeshingWidget::CreateDistanceMatrix(mitk::Point3D ToolNavigationPosition)
+void QmitkMaxillofacialRemeshingWidget::InitiateDistanceControl(mitk::DataNode::Pointer node)
 {
-	/*mitk::Point3D P = ToolNavigationPosition;
-	unsigned int indexOfminimumDistance = m_remesher->CreateControlDistanceMatrix(P, m_remesher->GetMeshSurface());
-	//Create line between tool point and closest point in surface
-	std::cout << "Index of minimum distance: " << endl;
-	std::cout << indexOfminimumDistance << endl;*/
-	//double *S = m_remesher->GetMeshSurface()->GetPoint(indexOfminimumDistance);
-	double *S = new double[3];
-
-	double *Nav_pos = new double[3];
-	Nav_pos[0] = ToolNavigationPosition[0];
-	Nav_pos[1] = ToolNavigationPosition[1];
-	Nav_pos[2] = ToolNavigationPosition[2];
-
-	
+	/*
 	vtkSmartPointer<vtkCleanPolyData> clean1 = vtkSmartPointer<vtkCleanPolyData>::New();
 	vtkSmartPointer<vtkCleanPolyData> clean2 = vtkSmartPointer<vtkCleanPolyData>::New();
 
@@ -341,21 +329,26 @@ double* QmitkMaxillofacialRemeshingWidget::CreateDistanceMatrix(mitk::Point3D To
 	//vtkSmartPointer<vtkScalarBarActor> m_scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
 
 	//m_renderer->AddActor(m_actor);
+	*/
 
 	//Find closest point on surface
-
-	m_Locator = mitk::PointLocator::New();
-	m_Locator->SetPoints(m_remesher->GetMeshSurface());
-	int distance;
-	int closestPointId = m_Locator->FindClosestPoint(ToolNavigationPosition[0], ToolNavigationPosition[1], ToolNavigationPosition[2]);
 	
-	std::cout << "Index of closest point: " << endl;
-	std::cout << closestPointId << endl;
+	mitk::Surface::Pointer surface = static_cast<mitk::Surface*>(node->GetData());
 
-	return S;
+	//First option: point locator
+	//m_Locator = mitk::PointLocator::New();
+	//m_Locator->SetPoints(m_remesher->GetMeshSurface());
+
+	//Second option: cell locator
+	
+	m_CellLocator = vtkSmartPointer<vtkCellLocator>::New();
+	m_CellLocator->SetDataSet(surface->GetVtkPolyData());
+	m_CellLocator->BuildLocator();
+
+	return;
 }
 
-Distance_Data* QmitkMaxillofacialRemeshingWidget::ControlOfDistance(mitk::Point3D ToolNavigationPosition)
+Distance_Data* QmitkMaxillofacialRemeshingWidget::RealTimeControlOfDistance(mitk::Point3D ToolNavigationPosition)
 {
 	Distance_Data *distance_data = new Distance_Data();
 
@@ -363,50 +356,40 @@ Distance_Data* QmitkMaxillofacialRemeshingWidget::ControlOfDistance(mitk::Point3
 	Nav_pos[0] = ToolNavigationPosition[0];
 	Nav_pos[1] = ToolNavigationPosition[1];
 	Nav_pos[2] = ToolNavigationPosition[2];
-
-
+	
+	//First option: find the closest points to Navigation 3D point
 	/*
-	vtkSmartPointer<vtkCleanPolyData> clean1 = vtkSmartPointer<vtkCleanPolyData>::New();
-	vtkSmartPointer<vtkCleanPolyData> clean2 = vtkSmartPointer<vtkCleanPolyData>::New();
-
-	clean1->SetInputData(m_remesher->GetMeshSurface());
-	
-
-	vtkSmartPointer<vtkSphereSource> sphereSource1 = vtkSmartPointer<vtkSphereSource>::New();
-	sphereSource1->SetCenter(ToolNavigationPosition[0], ToolNavigationPosition[1], ToolNavigationPosition[2]);
-	sphereSource1->SetRadius(0.1);
-	sphereSource1->Update();
-	clean2->SetInputData(sphereSource1->GetOutput());
-
-	m_distanceFilter->SetInputConnection(0, clean1->GetOutputPort());
-	m_distanceFilter->SetInputConnection(1, clean2->GetOutputPort());
-	m_distanceFilter->SignedDistanceOff();
-	
-	m_distanceFilter->Update();
-	
-	vtkSmartPointer<vtkPolyData> pd = m_distanceFilter->GetOutput();
-	
-	double minimum_distance = m_distanceFilter->GetOutput()->GetPointData()->GetScalars()->GetRange()[0];
-
-	std::cout << "New minimum distance: " << endl;
-	std::cout << minimum_distance << endl;
-	*/
-	//std::cout << "New point array: " << endl;
-	//std::cout << m_distanceFilter->GetOutput(1)->GetPointData()->GetArray("Points") << endl;
-	//Try with VTK Point Locator
-	//vtkPointLocator::FindClosestPoint
-	/*vtkSmartPointer<vtkPointLocator> Loc = vtkSmartPointer<vtkPointLocator>::New();
-	Loc->SetDataSet(m_remesher->GetMeshSurface());
-	vtkSmartPointer<vtkIdList> closest_points = vtkSmartPointer<vtkIdList>::New();
-	Loc->FindPointsWithinRadius(minimum_distance, Nav_pos, closest_points);
-	double* point = Loc->GetDataSet()->GetPoint(closest_points->GetId(0));*/
-	
 	int closestPointId = m_Locator->FindClosestPoint(ToolNavigationPosition[0], ToolNavigationPosition[1], ToolNavigationPosition[2]);
-	std::cout << "Index of closest point: " << endl;
-	std::cout << closestPointId << endl;
-	//distance_data->distance = m_distanceFilter->GetOutput()->GetPointData()->GetScalars()->GetRange()[0];
 	distance_data->closest_point = m_remesher->GetMeshSurface()->GetPoint(closestPointId);
-	
 	distance_data->distance = sqrt((distance_data->closest_point[0] - Nav_pos[0])*(distance_data->closest_point[0] - Nav_pos[0]) + (distance_data->closest_point[1] - Nav_pos[1])*(distance_data->closest_point[1] - Nav_pos[1]) + (distance_data->closest_point[2] - Nav_pos[2]) *(distance_data->closest_point[2] - Nav_pos[2]));
-  return distance_data;
+	std::cout << "1a->distance_data->closest_point: " << endl;
+	std::cout << distance_data->closest_point[0] << "; " << distance_data->closest_point[1] << "; " << distance_data->closest_point[2] << endl;
+	std::cout << "1b->Minimum distance: " << endl;
+	std::cout << distance_data->distance << endl;
+	std::cout << endl;
+	*/
+	//Second option: find the closest cell points to Navigation 3D point
+	
+	double* closestCellPoint = new double[3];//the coordinates of the closest point will be returned here
+
+	
+	double closestCellPointDistance2; //the squared distance to the closest point will be returned here
+	vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+	vtkGenericCell* cell = vtkGenericCell::New();
+	int subId; //this is rarely used (in triangle strips only, I believe)
+
+	m_CellLocator->FindClosestPoint(Nav_pos, closestCellPoint, cell, cellId, subId, closestCellPointDistance2);
+
+	distance_data->closest_point = closestCellPoint;
+	distance_data->distance = sqrt(closestCellPointDistance2);
+
+	cell->Delete();
+
+	std::cout << "2a->distance_data->closest_point in cell: " << endl;
+	std::cout << distance_data->closest_point[0] << "; " << distance_data->closest_point[1] << "; " << distance_data->closest_point[2] << endl;
+	std::cout << "2b->Minimum distance: " << endl;
+	std::cout << distance_data->distance << endl;
+	std::cout << endl;
+	
+	return distance_data;
 }

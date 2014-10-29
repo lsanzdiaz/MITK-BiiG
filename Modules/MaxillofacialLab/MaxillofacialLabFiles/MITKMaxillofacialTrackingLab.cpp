@@ -24,6 +24,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 MITKMaxillofacialTrackingLab::MITKMaxillofacialTrackingLab()
 {
 	m_RegistrationTransformITK = mitk::AffineTransform3D::New();
+	m_RegistrationTransformITK_Inverse = mitk::AffineTransform3D::New();
 }
 
 /** @Destructor */
@@ -58,11 +59,17 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer
   /*here, the actual transform is computed */
 
   m_RegistrationTransformVTK = vtkSmartPointer<vtkLandmarkTransform>::New();
+  m_RegistrationTransformVTK_Inverse = m_RegistrationTransformVTK->GetLinearInverse();
+
+
+
   m_RegistrationTransformVTK->SetSourceLandmarks(sourcePoints);
   m_RegistrationTransformVTK->SetTargetLandmarks(targetPoints);
   m_RegistrationTransformVTK->SetModeToRigidBody();
   m_RegistrationTransformVTK->Modified();
   m_RegistrationTransformVTK->Update();
+
+
   
   /*compute FRE of transform */
   double m_FRE = ComputeFRE(trackerFiducials, imageFiducials, m_RegistrationTransformVTK);
@@ -87,11 +94,27 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer
     translationDouble[k] = m->GetElement(k,3);
   }
   /*Create affine transform 3D surface, accesible from other modules or plugins */
-
-  
   m_RegistrationTransformITK->SetMatrix(rotationDouble);
   m_RegistrationTransformITK->SetOffset(translationDouble);
+
   
+
+  m = m_RegistrationTransformVTK_Inverse->GetMatrix();
+  for (int k = 0; k<3; k++) for (int l = 0; l<3; l++)
+  {
+	  rotationFloat[k][l] = m->GetElement(k, l);
+	  rotationDouble[k][l] = m->GetElement(k, l);
+
+  }
+  for (int k = 0; k<3; k++)
+  {
+	  translationFloat[k] = m->GetElement(k, 3);
+	  translationDouble[k] = m->GetElement(k, 3);
+  }
+  
+  m_RegistrationTransformITK_Inverse->SetMatrix(rotationDouble);
+  m_RegistrationTransformITK_Inverse->SetOffset(translationDouble);
+
   return;
 }
 
@@ -104,6 +127,17 @@ mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistratio
 {
 	return m_RegistrationTransformITK;
 }
+
+vtkSmartPointer<vtkLinearTransform> MITKMaxillofacialTrackingLab::GetVTKRegistrationTransformInverse()
+{
+	return m_RegistrationTransformVTK_Inverse;
+}
+
+mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistrationTransformInverse()
+{
+	return m_RegistrationTransformITK_Inverse;
+}
+
 
 double MITKMaxillofacialTrackingLab::GetRegistrationFRE()
 {

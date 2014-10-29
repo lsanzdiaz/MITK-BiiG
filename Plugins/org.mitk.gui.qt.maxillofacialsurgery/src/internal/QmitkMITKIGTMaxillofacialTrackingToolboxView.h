@@ -36,6 +36,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 //vtk headers
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
+#include <vtkColorTransferFunction.h>
 
 
 //QT headers
@@ -117,6 +118,8 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
         devices don't support auto detection.*/
     void OnAutoDetectTools();
 
+	void OnSetAsReferenceMarker(bool on);
+
     /** @brief Slot for tracking timer. The timer updates the IGT pipline and also the logging filter if logging is activated.*/
     void UpdateTrackingTimer();
 
@@ -134,11 +137,19 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 
 
 	void OnObjectmarkerSelected();
+
+	/** @brief This slot allows for loading all the calibration files, tools, STLs, and registration data together in one step.*/
+	void OnFastConfiguration();
+
+	void OnTargetSurfaceChanged(const mitk::DataNode *node);
 	
 	/**************************Registration tab ************************************/
 	
 	/*brief This method sets up the navigation pipeline during initialization.*/
 	void OnSetupNavigation();
+
+	/*brief This method sets up the tool pipeline during initialization.*/
+	void OnSetupTool();
 	
 	/* This method is called when an instrument or tool is selected. It stores the navigation data of the instrument.*/
 	void OnInstrumentSelected();
@@ -255,13 +266,24 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
    /*members for the point set recording*/
    mitk::NavigationData::Pointer m_PointSetRecordingNavigationData;
    mitk::PointSet::Pointer m_PSRecordingPointSet;
+  
    mitk::PointSet::Pointer m_PSRegisteredLastPoint;
    mitk::PointSet::Pointer m_DistanceLinePointSet;
+   mitk::NavigationData::Pointer last_position;
+   vtkColorTransferFunction *m_colorTransferFunction;
    bool m_PointSetRecording;
    bool m_DistanceControl;
    bool m_PermanentRegistration;
    bool m_CameraView;
    mitk::CameraVisualization::Pointer m_VirtualView;
+
+   int m_Reference_Index;
+   bool m_ThereIsAReference;
+   bool m_ReferenceMarkerChecked;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Reference_Orientation_Inverse;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Original_Reference_Orientation;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Original_Reference_Orientation_Inverse;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_TotalOrientationTransform;
 };
 
 

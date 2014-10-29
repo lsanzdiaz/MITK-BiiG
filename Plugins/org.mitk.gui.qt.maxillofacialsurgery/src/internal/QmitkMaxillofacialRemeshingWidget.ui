@@ -36,7 +36,7 @@
       </widget>
      </item>
      <item row="0" column="1" colspan="2">
-      <widget class="QmitkDataStorageComboBox" name="surfaceComboBox">
+      <widget class="QmitkDataStorageComboBox" name="m_surfaceComboBox">
        <property name="enabled">
         <bool>true</bool>
        </property>
