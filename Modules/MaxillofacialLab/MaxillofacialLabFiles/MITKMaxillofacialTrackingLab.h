@@ -17,6 +17,13 @@ See LICENSE.txt or http://www.mitk.org for details.
 #if !defined(MITKMAXILLOFACIALLAB_H__INCLUDED)
 #define MITKMAXILLOFACIALLAB_H__INCLUDED
 
+
+//MITK
+
+#include <mitkSurface.h>
+#include <mitkPointLocator.h>
+
+
 //QMITK
 #include <QmitkPointListWidget.h>
 
@@ -26,8 +33,27 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <vtkTransform.h>
 #include <vtkPoints.h>
 
+#include <vtkIterativeClosestPointTransform.h>
+#include <vtkMatrix4x4.h>
+#include <vtkMath.h>
+#include "vtkPolyData.h"
+#include <vtkCellArray.h>
+
+#include "itkVersorRigid3DTransform.h"
+
 
 #include <MitkMaxillofacialLabExports.h>
+
+typedef struct ToolSurfaceRegistration
+{
+	vtkSmartPointer<vtkLandmarkTransform> RegistrationTransformVTK;
+	//mitk::AffineTransform3D::Pointer m_RegistrationTransformITK;
+	mitk::AffineTransform3D::Pointer RegistrationTransformITK_Inverse;
+	mitk::AffineTransform3D::Pointer RegistrationTransformITK;
+	vtkSmartPointer<vtkLinearTransform> RegistrationTransformVTK_Inverse;
+	double FRE;
+};
+
 
 /** @brief MITKIGTMaxillofacialTrackingLab */
 class MitkMaxillofacialLab_EXPORT MITKMaxillofacialTrackingLab
@@ -35,12 +61,12 @@ class MitkMaxillofacialLab_EXPORT MITKMaxillofacialTrackingLab
 
 public:
 /** @brief default constructor*/
-MITKMaxillofacialTrackingLab();
+MITKMaxillofacialTrackingLab(int tool_number);
 
 /** @brief default destructor*/
 virtual ~MITKMaxillofacialTrackingLab();
 
-void CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode);
+void CalculateRegistration(int i, mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode);
 
 /** @brief Computes the fiducial registration error out of two sets of fiducials.
  *  The two sets must have the same size and the points must correspond to each other.
@@ -49,28 +75,43 @@ void CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mit
  */
 
 /** @brief This method returns the registration transform in the VTK format.*/
-vtkSmartPointer<vtkLandmarkTransform> GetVTKRegistrationTransform();
+vtkSmartPointer<vtkLandmarkTransform> GetVTKRegistrationTransform(int i);
 /** @brief This method returns the registration transform in the ITK format.*/
-mitk::AffineTransform3D::Pointer GetITKRegistrationTransform();
+mitk::AffineTransform3D::Pointer GetITKRegistrationTransform(int i);
 
-vtkSmartPointer<vtkLinearTransform> GetVTKRegistrationTransformInverse();
-mitk::AffineTransform3D::Pointer GetITKRegistrationTransformInverse();
+vtkSmartPointer<vtkLinearTransform> GetVTKRegistrationTransformInverse(int i);
+mitk::AffineTransform3D::Pointer GetITKRegistrationTransformInverse(int i);
 
-double GetRegistrationFRE();
+double GetRegistrationFRE(int i);
+
+void SelectControlSurface(mitk::DataNode::Pointer ControlSurface);
+
+void SelectMovingSurface(mitk::DataNode::Pointer MovingSurface);
+
+double checkLandmarkError();
+
+vtkMatrix4x4 * calculateLandmarkbasedWithICP();
 
 private:
-	vtkSmartPointer<vtkLandmarkTransform> m_RegistrationTransformVTK;
-	mitk::AffineTransform3D::Pointer m_RegistrationTransformITK;
-	mitk::AffineTransform3D::Pointer m_RegistrationTransformITK_Inverse;
-	vtkSmartPointer<vtkLinearTransform> m_RegistrationTransformVTK_Inverse;
-	double m_FRE;
+	
 
-	double ComputeFRE(mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform = NULL);
+	double ComputeFRE(int i, mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform = NULL);
 	/**
 	* Checks if the difference between two given transformations is high which means the method returns
 	* true if the difference exeeds the given position and angular threshold.
 	*/
 	
+	mitk::DataNode::Pointer m_FixedNode;
+	mitk::PointSet::Pointer m_FixedPointSet;
+	mitk::Surface::Pointer m_FixedSurface;
+	mitk::DataNode::Pointer m_MovingNode;
+	mitk::PointSet::Pointer m_MovingPointSet;
+	mitk::Surface::Pointer m_MovingSurface;
+	int m_ToolNumber;
+
+	vtkIterativeClosestPointTransform * m_ICPTransform;
+
+	ToolSurfaceRegistration *m_ToolSurfaceRegistration;
 };
 
 #endif // MITKMaxillofacialTrackingLab_h

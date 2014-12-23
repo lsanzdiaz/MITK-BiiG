@@ -6,17 +6,20 @@ set(INTERNAL_CPP_FILES
   mitkPluginActivator.cpp
   QmitkMITKIGTMaxillofacialTrackingToolboxView.cpp
   QmitkMaxillofacialRemeshingWidget.cpp
+  QmitkDistanceCalculationBetweenPointsWidget.cpp
 )
 
 set(UI_FILES
   src/internal/QmitkMITKIGTMaxillofacialTrackingToolboxViewControls.ui
   src/internal/QmitkMaxillofacialRemeshingWidget.ui
+  src/internal/QmitkDistanceCalculationBetweenPointsWidget.ui
 )
 
 set(MOC_H_FILES
   src/internal/mitkPluginActivator.h
   src/internal/QmitkMITKIGTMaxillofacialTrackingToolboxView.h
   src/internal/QmitkMaxillofacialRemeshingWidget.h
+  src/internal/QmitkDistanceCalculationBetweenPointsWidget.h
 )
 
 # list of resource files which can be used by the plug-in

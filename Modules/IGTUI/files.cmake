@@ -18,6 +18,8 @@ set(CPP_FILES
   Qmitk/QmitkNavigationDataSourceSelectionWidget.cpp
   Qmitk/QmitkInteractiveTransformationWidget.cpp
   Qmitk/QmitkNavigationToolStorageSelectionWidget.cpp
+  Qmitk/QmitkMaxillofacialNavigationDataSourceSelectionWidget.cpp
+  Qmitk/QmitkMaxillofacialRegistrationWidget.cpp
 )
 
 set(UI_FILES
@@ -38,6 +40,8 @@ set(UI_FILES
   Qmitk/QmitkNavigationDataSourceSelectionWidgetControls.ui
   Qmitk/QmitkInteractiveTransformationWidgetControls.ui
   Qmitk/QmitkNavigationToolStorageSelectionWidgetControls.ui
+  Qmitk/QmitkMaxillofacialNavigationDataSourceSelectionWidgetControls.ui
+  Qmitk/QmitkMaxillofacialRegistrationWidget.ui
 )
 
 set(MOC_H_FILES
@@ -60,6 +64,8 @@ set(MOC_H_FILES
   Qmitk/QmitkNavigationDataSourceSelectionWidget.h
   Qmitk/QmitkInteractiveTransformationWidget.h
   Qmitk/QmitkNavigationToolStorageSelectionWidget.h
+  Qmitk/QmitkMaxillofacialNavigationDataSourceSelectionWidget.h
+  Qmitk/QmitkMaxillofacialRegistrationWidget.h
 )
 
 set(QRC_FILES

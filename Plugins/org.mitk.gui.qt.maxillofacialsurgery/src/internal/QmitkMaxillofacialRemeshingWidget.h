@@ -18,24 +18,25 @@ See LICENSE.txt or http://www.mitk.org for details.
 #define QmitkMaxillofacialRemeshingWidget_h
 
 #include "ui_QmitkMaxillofacialRemeshingWidget.h"
-#include "QmitkStdMultiWidget.h"
-#include <QThread>
-#include <mitkSurface.h>
-#include <QWidget.h>
-#include <MitkQtWidgetsExports.h>
 
-// Own Includes
+//MITK
+
 #include "mitkDataStorage.h"
 #include "mitkDataNode.h"
-#include "mitkWeakPointer.h"
 #include "mitkNodePredicateBase.h"
 #include "mitkPointSet.h"
 #include <MITKMaxillofacialMeshLab.h>
 #include "mitkPointLocator.h"
-#include "vtkCellLocator.h"
+#include <mitkSurface.h>
+#include <MitkQtWidgetsExports.h>
 
+//VTK
+
+#include "vtkCellLocator.h"
 #include <vtkSmartPointer.h>
 #include <vtkDistancePolyDataFilter.h>
+#include <vtkProperty.h>
+
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderWindow.h>
@@ -43,16 +44,13 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <vtkActor.h>
 #include <vtkScalarBarActor.h>
 
-/*!
- * \brief Remeshing Widget
- *
- *
- *
- *
- *
- * \sa 
-*/
-typedef struct Distance_Data
+//QT
+
+#include "QmitkStdMultiWidget.h"
+#include <QThread>
+#include <QWidget.h>
+
+struct Distance_Data
 {
 	double* closest_point;
 	double distance;
@@ -108,7 +106,7 @@ protected:
   vtkSmartPointer<vtkActor> m_actor;
   vtkSmartPointer<vtkScalarBarActor> m_scalarBar;
 
-  mitk::PointLocator::Pointer m_Locator;
+  //mitk::PointLocator::Pointer m_Locator;
   vtkSmartPointer<vtkCellLocator> m_CellLocator;
 };
 #endif // _QmitkMaxillofacialRemeshing_H_INCLUDED

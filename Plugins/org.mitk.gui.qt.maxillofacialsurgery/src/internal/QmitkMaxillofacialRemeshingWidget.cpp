@@ -18,40 +18,14 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 // MITK
 
-#include <MITKMaxillofacialMeshLab.h>
-#include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
-#include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateProperty.h>
 #include <mitkVtkRepresentationProperty.h>
-#include <mitkPointLocator.h>
-
-#include <itkCommand.h>
-#include <itkPoint.h>
 #include <mitkMessage.h>
-
-// Qt
-#include <QIntValidator>
 
 // VTK
 #include <vtkPolyData.h>
-#include <vtkProperty.h>
-#include <vtkLine.h>
-#include <vtkDistancePolyDataFilter.h>
-#include <vtkCleanPolyData.h>
-#include <vtkPolyDataMapper.h>
 #include <vtkPolyDataReader.h>
-#include <vtkSphereSource.h>
-#include <vtkScalarBarActor.h>
-#include <vtkIntersectionPolyDataFilter.h>
-#include <vtkArray.h>
-#include <vtkPointLocator.h>
 #include <vtkGenericCell.h>
-
-// C++ Standard Library
-#include <algorithm>
-#include <limits>
-
 
 
 /* VIEW MANAGEMENT */
@@ -96,8 +70,7 @@ void QmitkMaxillofacialRemeshingWidget::SetRenderer(vtkSmartPointer<vtkRenderWin
 
 	
 	//m_renderer->AddActor2D(m_scalarBar);
-
-
+	
 	//m_scalarBar->SetLookupTable(NULL);
 	//m_scalarBar->SetTitle("Distance");
 	//m_scalarBar->SetNumberOfLabels(4);
@@ -224,6 +197,9 @@ void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
 {
   mitk::DataNode::Pointer selectedNode = m_Controls->m_surfaceComboBox->GetSelectedNode();
   mitk::Surface::ConstPointer surface = static_cast<mitk::Surface*>(selectedNode->GetData());
+
+  mitk::Surface::Pointer surface2 = static_cast<mitk::Surface*>(selectedNode->GetData());
+
   int numVertices = m_Controls->numVerticesSpinBox->value();
   double gradation = m_Controls->gradationSpinBox->value();
   int subsampling = m_Controls->subsamplingSpinBox->value();
@@ -247,7 +223,20 @@ void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
   newNode->SetData(mesh_surface);
 
   m_DataStorage->Add(newNode, selectedNode);
+
+
+  //CREATE SURFACE MAPPER
   
+   m_mapper = vtkPolyDataMapper::New();
+   m_mapper->SetInputData(surface2->GetVtkPolyData());
+
+   vtkSmartPointer<vtkActor> m_actor = vtkSmartPointer<vtkActor>::New();
+   m_actor->SetMapper(m_mapper);
+
+   m_renderer->AddActor(m_actor);
+
+   m_mapper->Update();
+
   }
 
 void QmitkMaxillofacialRemeshingWidget::OnSelectedSurfaceChanged(const mitk::DataNode *node)

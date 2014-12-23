@@ -36,11 +36,19 @@ See LICENSE.txt or http://www.mitk.org for details.
 //vtk headers
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
-#include <vtkColorTransferFunction.h>
-
+#include <vtkPoints.h>
 
 //QT headers
 #include <QTimer>
+
+typedef struct SurfaceGeometricalTransform
+{
+	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer ToolAffineTransform0Inverse;
+	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer SurfaceAffineTransform0;
+	bool SurfaceRelated;
+	mitk::DataNode::Pointer surface_node;
+	std::string node_name;
+};
 
 /*!
   \brief QmitkMITKIGTTrackingToolboxView
@@ -68,16 +76,19 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	/*Initialize the user interface which corresponds to this plugin*/
 	virtual void CreateQtPartControl(QWidget *parent);
 	virtual void SetFocus();
+
   protected slots:
 
     /** @brief changes name of the filename when switching fileextension by radio button */
     void OnToggleFileExtension(QLineEdit *filename);
+
     /** @brief This slot is called if the user wants to load a new tool file. A new window opens where the user can choose a file. If the chosen file is
                corrupt or not valid the user gets an error message. If the file was loaded successfully the tools are show in the tool status widget. */
     void OnLoadTools();
 
     /** @brief This slot connects to the device. In status "connected" configuration of the device is disabled. */
     void OnConnect();
+	
 	/** @brief This slot connects to a virtual device. */
 	void OnVirtualConnect();
 
@@ -118,7 +129,11 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
         devices don't support auto detection.*/
     void OnAutoDetectTools();
 
-	void OnSetAsReferenceMarker(bool on);
+	/** @brief If true, the tool that is created will be the reference marker */
+	void OnSetAsReferenceFramework(bool on);
+
+	/** @brief If true, a selected surface model will be associated with the tool */
+	void OnAssociateSurface(bool on);
 
     /** @brief Slot for tracking timer. The timer updates the IGT pipline and also the logging filter if logging is activated.*/
     void UpdateTrackingTimer();
@@ -135,14 +150,6 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
     /** @brief This slot is called if the user cancels the creation of a new tool. */
     void OnAddSingleToolCanceled();
 
-
-	void OnObjectmarkerSelected();
-
-	/** @brief This slot allows for loading all the calibration files, tools, STLs, and registration data together in one step.*/
-	void OnFastConfiguration();
-
-	void OnTargetSurfaceChanged(const mitk::DataNode *node);
-	
 	/**************************Registration tab ************************************/
 	
 	/*brief This method sets up the navigation pipeline during initialization.*/
@@ -150,12 +157,9 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 
 	/*brief This method sets up the tool pipeline during initialization.*/
 	void OnSetupTool();
-	
+
 	/* This method is called when an instrument or tool is selected. It stores the navigation data of the instrument.*/
-	void OnInstrumentSelected();
-	
-	/* This method is called when the object marker is selected. It stores the navigation data of the object marker.*/
-	//void OnObjectmarkerSelected();
+	//void OnInstrumentSelected();
 	
 	/* This method calculates the transform for the registration target -> image (tracking -> original image)*/
 	void OnCalculateRegistration();
@@ -174,18 +178,33 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	a file opens.*/
 	void OnChooseTransformFileClicked();
 
+	/** @brief This slot is called if the user wants to accept the necessary data for a selected tool before the registration step.
+	This data is: 
+	1. Whether the tool will be the reference framework or not.
+	2. If there is a surface model that must be permanently associated with the tool (if the tool moves, the surface has to move accordingly).*/
+	void OnAcceptToolData();
 
-	/**************************Point set recording tab ************************************/
+	/**************************Trajectory monitoring and distance control tab************************************/
 
 	/** @brief This method starts the PointSet recording.*/
 	void OnPointSetRecording(bool record);
 
-	/** @brief This method starts the Distance control.*/
+	/** @brief This method starts the Distance control between the tool tip and a selected surface model*/
 	void OnDistanceControl(bool distance_control);
 
-	/**************************Virtual camera view tab ************************************/
-	/** @brief This method activates the virtual camera.*/
-	//void OnVirtualCamera(bool on);
+	/** @brief  */
+	void OnSetupToolForTrajectoryControl();
+
+	void OnAddReferencePosition();
+	void OnAddMeasurementPosition();
+	void OnCalculateDistanceBetweenPoints();
+
+	void OnSurfaceToSurfaceDisalignmentControl();
+
+	/***********************Preload calibration files, tools, surface models, registration data *****************/
+
+	/** @brief This slot allows for loading all the calibration files, tools, STLs, and registration data together in one step.*/
+	void OnPreloadSettings();
 
   protected:
 
@@ -210,16 +229,20 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
     /** @brief reinits the view globally. */
     void GlobalReinit();
 
-	//************************ MEMBERS FOR THE TRACKING LAB *****************************************
+
+	void LoadModel(std::string filename);
+	
+private:
 	/** @brief tracking lab object */
 	MITKMaxillofacialTrackingLab *m_MaxillofacialTrackingLab;
 	
 	void CreateBundleWidgets(QWidget* parent);
-	void CheckSurfaceCenter();
+
 	/** @brief This method save the image points and the target points
 	into the data storage object, so the registration can be made.*/
 	void InitializeRegistration();
 
+	void InitializeDistanceControl();
 
 	bool CheckRegistrationInitialization();
 
@@ -229,27 +252,25 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	/** @members for initial registration*/
 	mitk::DataNode::Pointer m_ImageFiducialsDataNode;
 	mitk::DataNode::Pointer m_TrackerFiducialsDataNode;
-	mitk::NavigationData::Pointer m_ObjectmarkerNavigationData;
+	//mitk::NavigationData::Pointer m_ObjectmarkerNavigationData;
 	mitk::NavigationData::Pointer m_InstrumentNavigationData;
 
 	/***************************************************************************************************/
 
 	/** @members for the filter pipeline */
    mitk::TrackingDeviceSource::Pointer m_TrackingDeviceSource; ///> member for the source of the IGT pipeline
-   mitk::TrackingDeviceData m_TrackingDeviceData; ///> stores the tracking device data as long as this is not handled by the tracking device configuration widget
    mitk::NavigationDataObjectVisualizationFilter::Pointer m_ToolVisualizationFilter; ///> holds the tool visualization filter (second filter of the IGT pipeline)
-   mitk::NavigationDataObjectVisualizationFilter::Pointer m_PermanentRegistrationFilter; ///> holds the tool visualization filter (second filter of the IGT pipeline)
    mitk::NavigationDataRecorder::Pointer m_loggingFilter; ///> holds the logging filter if logging is on (third filter of the IGT pipeline)
-   mitk::NavigationData::Pointer m_T_MarkerRel;
-   mitk::NavigationData::Pointer m_T_ObjectReg;
-   mitk::NavigationData::Pointer m_ObjectmarkerNavigationDataLastUpdate; ///< this is the position of the object marker from the last call of update(); it is used to check the difference and decide if the visualization must be updated
+ 
+   /** @members to store the tracking device general data */
+   mitk::TrackingDeviceData m_TrackingDeviceData; ///> stores the tracking device data as long as this is not handled by the tracking device configuration widget
+
+   /** @brief This timer updates the IGT pipeline and also the logging filter if logging is activated.*/
+   QTimer* m_TrackingTimer;
 
    /** @brief This method destroys the filter pipeline.*/
    void DestroyIGTPipeline();
    
-   /** @brief This timer updates the IGT pipline and also the logging filter if logging is activated.*/
-   QTimer* m_TrackingTimer;
-
    /** @help methods for enable/disable buttons*/
    void DisableLoggingButtons();
    void EnableLoggingButtons();
@@ -257,33 +278,45 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
    void EnableOptionsButtons();
    void EnableTrackingConfigurationButtons();
    void DisableTrackingConfigurationButtons();
+   
    /** Replaces the current navigation tool storage which is stored in m_toolStorage.
     *  Basically handles the microservice stuff: unregisteres the old storage, then
     *  replaces the storage and registers the new one.
     */
    void ReplaceCurrentToolStorage(mitk::NavigationToolStorage::Pointer newStorage, std::string newStorageName);
 
-   /*members for the point set recording*/
+   /*indicates if permanent registration must be applied*/
+   bool m_PermanentRegistration;
+   
+   /*members for the trajectory pointset*/
    mitk::NavigationData::Pointer m_PointSetRecordingNavigationData;
    mitk::PointSet::Pointer m_PSRecordingPointSet;
-  
-   mitk::PointSet::Pointer m_PSRegisteredLastPoint;
-   mitk::PointSet::Pointer m_DistanceLinePointSet;
-   mitk::NavigationData::Pointer last_position;
-   vtkColorTransferFunction *m_colorTransferFunction;
    bool m_PointSetRecording;
-   bool m_DistanceControl;
-   bool m_PermanentRegistration;
-   bool m_CameraView;
-   mitk::CameraVisualization::Pointer m_VirtualView;
 
+   /*members for the distance between the tool and a selected surface*/
+   mitk::PointSet::Pointer m_DistanceLinePointSet;
+   bool m_DistanceControl;
+
+   /*members for the distance between a reference point and a key point in the surgery procedure*/
+   mitk::DataNode::Pointer m_ReferencePositionDataNode;
+   mitk::DataNode::Pointer m_MeasurementPositionDataNode;
+
+   /*m_LastToolPosition is useful to compare to the current tool position and check if we have moved enough*/
+   mitk::NavigationData::Pointer m_LastToolPosition;
+   
+ 
+   /*Members for the creation of a reference marker*/
    int m_Reference_Index;
    bool m_ThereIsAReference;
-   bool m_ReferenceMarkerChecked;
-   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Reference_Orientation_Inverse;
+   bool m_ReferenceFrameworkChecked;
+   
    itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Original_Reference_Orientation;
    itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Original_Reference_Orientation_Inverse;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Total_Reference_Orientation;
    itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_TotalOrientationTransform;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Reference_Orientation_Inverse;
+
+   SurfaceGeometricalTransform *m_SurfaceGeometricalTransform;
 };
 
 

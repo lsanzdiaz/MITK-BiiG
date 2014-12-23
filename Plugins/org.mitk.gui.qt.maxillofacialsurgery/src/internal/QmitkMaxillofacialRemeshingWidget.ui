@@ -424,7 +424,7 @@
   </customwidget>
  </customwidgets>
   <tabstops>
-    <tabstop>surfaceComboBox</tabstop>
+    <tabstop>m_surfaceComboBox</tabstop>
     <tabstop>numVerticesSpinBox</tabstop>
     <tabstop>gradationSpinBox</tabstop>
     <tabstop>advancedSettingsButton</tabstop>
