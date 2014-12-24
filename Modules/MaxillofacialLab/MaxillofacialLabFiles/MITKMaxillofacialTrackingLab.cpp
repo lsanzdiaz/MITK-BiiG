@@ -22,15 +22,11 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 /** @Constructor */
 
-MITKMaxillofacialTrackingLab::MITKMaxillofacialTrackingLab(int tool_number)
+MITKMaxillofacialTrackingLab::MITKMaxillofacialTrackingLab()
 {
-	m_ToolNumber = tool_number;
-	m_ToolSurfaceRegistration = new ToolSurfaceRegistration[m_ToolNumber];
-	for (int i = 0; i < m_ToolNumber; i++)
-	{
-		m_ToolSurfaceRegistration[i].RegistrationTransformITK = mitk::AffineTransform3D::New();
-		m_ToolSurfaceRegistration[i].RegistrationTransformITK_Inverse = mitk::AffineTransform3D::New();
-	}
+	m_ToolSurfaceRegistration = new ToolSurfaceRegistration();
+	m_ToolSurfaceRegistration->RegistrationTransformITK = mitk::AffineTransform3D::New();
+	m_ToolSurfaceRegistration->RegistrationTransformITK_Inverse = mitk::AffineTransform3D::New();
 }
 
 /** @Destructor */
@@ -42,7 +38,7 @@ MITKMaxillofacialTrackingLab::~MITKMaxillofacialTrackingLab()
 
 /** @CalculateRegistration uses a Point-Based Algorithm to calculate the registration transform and compute the error */
 
-void MITKMaxillofacialTrackingLab::CalculateRegistration(int i, mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode)
+void MITKMaxillofacialTrackingLab::CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode)
 {
    /* retrieve fiducials from data storage */
   mitk::PointSet::Pointer imageFiducials = dynamic_cast<mitk::PointSet*>(m_ImageFiducialsDataNode->GetData());
@@ -64,21 +60,21 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(int i, mitk::DataNode::
 
   /*here, the actual transform is computed */
 
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK = vtkSmartPointer<vtkLandmarkTransform>::New();
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK_Inverse = m_ToolSurfaceRegistration[i].RegistrationTransformVTK->GetLinearInverse();
+  m_ToolSurfaceRegistration->RegistrationTransformVTK = vtkSmartPointer<vtkLandmarkTransform>::New();
+  m_ToolSurfaceRegistration->RegistrationTransformVTK_Inverse = m_ToolSurfaceRegistration->RegistrationTransformVTK->GetLinearInverse();
 
 
 
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK->SetSourceLandmarks(sourcePoints);
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK->SetTargetLandmarks(targetPoints);
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK->SetModeToRigidBody();
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK->Modified();
-  m_ToolSurfaceRegistration[i].RegistrationTransformVTK->Update();
+  m_ToolSurfaceRegistration->RegistrationTransformVTK->SetSourceLandmarks(sourcePoints);
+  m_ToolSurfaceRegistration->RegistrationTransformVTK->SetTargetLandmarks(targetPoints);
+  m_ToolSurfaceRegistration->RegistrationTransformVTK->SetModeToRigidBody();
+  m_ToolSurfaceRegistration->RegistrationTransformVTK->Modified();
+  m_ToolSurfaceRegistration->RegistrationTransformVTK->Update();
 
 
   
   /*compute FRE of transform */
-  double m_FRE = ComputeFRE(i, trackerFiducials, imageFiducials, m_ToolSurfaceRegistration[i].RegistrationTransformVTK);
+  double m_FRE = ComputeFRE(trackerFiducials, imageFiducials, m_ToolSurfaceRegistration->RegistrationTransformVTK);
   
   /* conversion from vtk back to itk/mitk data types */
 
@@ -87,7 +83,7 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(int i, mitk::DataNode::
   itk::Matrix<double,3,3> rotationDouble = itk::Matrix<double,3,3>();
   itk::Vector<double,3> translationDouble = itk::Vector<double,3>();
 
-  vtkSmartPointer<vtkMatrix4x4> m = m_ToolSurfaceRegistration[i].RegistrationTransformVTK->GetMatrix();
+  vtkSmartPointer<vtkMatrix4x4> m = m_ToolSurfaceRegistration->RegistrationTransformVTK->GetMatrix();
   for(int k=0; k<3; k++) for(int l=0; l<3; l++)
   {
     rotationFloat[k][l] = m->GetElement(k,l);
@@ -100,10 +96,10 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(int i, mitk::DataNode::
     translationDouble[k] = m->GetElement(k,3);
   }
   /*Create affine transform 3D surface, accesible from other modules or plugins */
-  m_ToolSurfaceRegistration[i].RegistrationTransformITK->SetMatrix(rotationDouble);
-  m_ToolSurfaceRegistration[i].RegistrationTransformITK->SetOffset(translationDouble);
+  m_ToolSurfaceRegistration->RegistrationTransformITK->SetMatrix(rotationDouble);
+  m_ToolSurfaceRegistration->RegistrationTransformITK->SetOffset(translationDouble);
 
-  m = m_ToolSurfaceRegistration[i].RegistrationTransformVTK_Inverse->GetMatrix();
+  m = m_ToolSurfaceRegistration->RegistrationTransformVTK_Inverse->GetMatrix();
   for (int k = 0; k<3; k++) for (int l = 0; l<3; l++)
   {
 	  rotationFloat[k][l] = m->GetElement(k, l);
@@ -116,44 +112,44 @@ void MITKMaxillofacialTrackingLab::CalculateRegistration(int i, mitk::DataNode::
 	  translationDouble[k] = m->GetElement(k, 3);
   }
   
-  m_ToolSurfaceRegistration[i].RegistrationTransformITK_Inverse->SetMatrix(rotationDouble);
-  m_ToolSurfaceRegistration[i].RegistrationTransformITK_Inverse->SetOffset(translationDouble);
+  m_ToolSurfaceRegistration->RegistrationTransformITK_Inverse->SetMatrix(rotationDouble);
+  m_ToolSurfaceRegistration->RegistrationTransformITK_Inverse->SetOffset(translationDouble);
 
   return;
 }
 
-vtkSmartPointer<vtkLandmarkTransform> MITKMaxillofacialTrackingLab::GetVTKRegistrationTransform(int i)
+vtkSmartPointer<vtkLandmarkTransform> MITKMaxillofacialTrackingLab::GetVTKRegistrationTransform()
 {
-	return m_ToolSurfaceRegistration[i].RegistrationTransformVTK;
+	return m_ToolSurfaceRegistration->RegistrationTransformVTK;
 }
 
-mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistrationTransform(int i)
+mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistrationTransform()
 {
-	return m_ToolSurfaceRegistration[i].RegistrationTransformITK;
+	return m_ToolSurfaceRegistration->RegistrationTransformITK;
 }
 
-vtkSmartPointer<vtkLinearTransform> MITKMaxillofacialTrackingLab::GetVTKRegistrationTransformInverse(int i)
+vtkSmartPointer<vtkLinearTransform> MITKMaxillofacialTrackingLab::GetVTKRegistrationTransformInverse()
 {
-	return m_ToolSurfaceRegistration[i].RegistrationTransformVTK_Inverse;
+	return m_ToolSurfaceRegistration->RegistrationTransformVTK_Inverse;
 }
 
-mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistrationTransformInverse(int i)
+mitk::AffineTransform3D::Pointer MITKMaxillofacialTrackingLab::GetITKRegistrationTransformInverse()
 {
-	return m_ToolSurfaceRegistration[i].RegistrationTransformITK_Inverse;
+	return m_ToolSurfaceRegistration->RegistrationTransformITK_Inverse;
 }
 
 
-double MITKMaxillofacialTrackingLab::GetRegistrationFRE(int i)
+double MITKMaxillofacialTrackingLab::GetRegistrationFRE()
 {
 
-	return m_ToolSurfaceRegistration[i].FRE;
+	return m_ToolSurfaceRegistration->FRE;
 }
 
 /** @ComputeFRE calculates de error given by the application of a registration transform */
 
-double MITKMaxillofacialTrackingLab::ComputeFRE(int i, mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform)
+double MITKMaxillofacialTrackingLab::ComputeFRE(mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform)
 {
-	m_ToolSurfaceRegistration[i].FRE = 0;
+	m_ToolSurfaceRegistration->FRE = 0;
 	if (trackerFiducials->GetSize() != ImageWorldFiducials->GetSize()) return -1;
 	
 	for (unsigned int i = 0; i < trackerFiducials->GetSize(); i++)
@@ -164,12 +160,12 @@ double MITKMaxillofacialTrackingLab::ComputeFRE(int i, mitk::PointSet::Pointer t
 			current_tracker_fiducial_point = transform->TransformPoint(trackerFiducials->GetPoint(i)[0], trackerFiducials->GetPoint(i)[1], trackerFiducials->GetPoint(i)[2]);
 		}
 		double cur_error_squared = current_tracker_fiducial_point.SquaredEuclideanDistanceTo(ImageWorldFiducials->GetPoint(i));
-		m_ToolSurfaceRegistration[i].FRE += cur_error_squared;
+		m_ToolSurfaceRegistration->FRE += cur_error_squared;
 	}
 
-	m_ToolSurfaceRegistration[i].FRE = sqrt(m_ToolSurfaceRegistration[i].FRE / (double)trackerFiducials->GetSize());
+	m_ToolSurfaceRegistration->FRE = sqrt(m_ToolSurfaceRegistration->FRE / (double)trackerFiducials->GetSize());
 
-	return m_ToolSurfaceRegistration[i].FRE;
+	return m_ToolSurfaceRegistration->FRE;
 }
 
 

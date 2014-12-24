@@ -61,12 +61,12 @@ class MitkMaxillofacialLab_EXPORT MITKMaxillofacialTrackingLab
 
 public:
 /** @brief default constructor*/
-MITKMaxillofacialTrackingLab(int tool_number);
+MITKMaxillofacialTrackingLab();
 
 /** @brief default destructor*/
 virtual ~MITKMaxillofacialTrackingLab();
 
-void CalculateRegistration(int i, mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode);
+void CalculateRegistration(mitk::DataNode::Pointer m_ImageFiducialsDataNode, mitk::DataNode::Pointer m_TrackerFiducialsDataNode);
 
 /** @brief Computes the fiducial registration error out of two sets of fiducials.
  *  The two sets must have the same size and the points must correspond to each other.
@@ -75,14 +75,14 @@ void CalculateRegistration(int i, mitk::DataNode::Pointer m_ImageFiducialsDataNo
  */
 
 /** @brief This method returns the registration transform in the VTK format.*/
-vtkSmartPointer<vtkLandmarkTransform> GetVTKRegistrationTransform(int i);
+vtkSmartPointer<vtkLandmarkTransform> GetVTKRegistrationTransform();
 /** @brief This method returns the registration transform in the ITK format.*/
-mitk::AffineTransform3D::Pointer GetITKRegistrationTransform(int i);
+mitk::AffineTransform3D::Pointer GetITKRegistrationTransform();
 
-vtkSmartPointer<vtkLinearTransform> GetVTKRegistrationTransformInverse(int i);
-mitk::AffineTransform3D::Pointer GetITKRegistrationTransformInverse(int i);
+vtkSmartPointer<vtkLinearTransform> GetVTKRegistrationTransformInverse();
+mitk::AffineTransform3D::Pointer GetITKRegistrationTransformInverse();
 
-double GetRegistrationFRE(int i);
+double GetRegistrationFRE();
 
 void SelectControlSurface(mitk::DataNode::Pointer ControlSurface);
 
@@ -95,7 +95,7 @@ vtkMatrix4x4 * calculateLandmarkbasedWithICP();
 private:
 	
 
-	double ComputeFRE(int i, mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform = NULL);
+	double ComputeFRE(mitk::PointSet::Pointer trackerFiducials, mitk::PointSet::Pointer ImageWorldFiducials, vtkSmartPointer<vtkLandmarkTransform> transform = NULL);
 	/**
 	* Checks if the difference between two given transformations is high which means the method returns
 	* true if the difference exeeds the given position and angular threshold.

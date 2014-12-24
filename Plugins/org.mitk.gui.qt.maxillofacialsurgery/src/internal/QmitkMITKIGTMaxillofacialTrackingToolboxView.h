@@ -43,8 +43,9 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 typedef struct SurfaceGeometricalTransform
 {
-	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer ToolAffineTransform0Inverse;
-	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer SurfaceAffineTransform0;
+	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer SurfaceToToolTransform;
+	//itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer ToolToVirtualWorldTransform;
+	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer ToolPositionAtRegistrationTime_Inverse;
 	bool SurfaceRelated;
 	mitk::DataNode::Pointer surface_node;
 	std::string node_name;
@@ -133,7 +134,7 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	void OnSetAsReferenceFramework(bool on);
 
 	/** @brief If true, a selected surface model will be associated with the tool */
-	void OnAssociateSurface(bool on);
+	void OnRegisterToolWithSurface(bool on);
 
     /** @brief Slot for tracking timer. The timer updates the IGT pipline and also the logging filter if logging is activated.*/
     void UpdateTrackingTimer();
@@ -183,6 +184,10 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	1. Whether the tool will be the reference framework or not.
 	2. If there is a surface model that must be permanently associated with the tool (if the tool moves, the surface has to move accordingly).*/
 	void OnAcceptToolData();
+
+	void OnToolToSurfaceRegistration(bool on);
+
+	void OnGeneralRegistration(bool on);
 
 	/**************************Trajectory monitoring and distance control tab************************************/
 
@@ -245,6 +250,8 @@ private:
 	void InitializeDistanceControl();
 
 	bool CheckRegistrationInitialization();
+
+	void SaveSurfaceToToolRegistrationTransform();
 
 	bool IsTransformDifferenceHigh(mitk::NavigationData::Pointer transformA, mitk::NavigationData::Pointer transformB, double euclideanDistanceThreshold = .8, double angularDifferenceThreshold = .8);
 
@@ -317,6 +324,7 @@ private:
    itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer m_Reference_Orientation_Inverse;
 
    SurfaceGeometricalTransform *m_SurfaceGeometricalTransform;
+   itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  m_GeneralRegistrationTransform;
 };
 
 

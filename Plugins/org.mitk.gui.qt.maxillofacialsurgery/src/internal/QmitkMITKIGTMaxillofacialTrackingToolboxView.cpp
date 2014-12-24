@@ -146,7 +146,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	
 
 	//allow to choose a surface that will be permanently associated with the selected tool
-	connect(m_Controls->m_AddToolSurfacePair, SIGNAL(toggled(bool)), this, SLOT(OnAssociateSurface(bool)));
+	connect(m_Controls->m_RegisterToolWithSurface, SIGNAL(toggled(bool)), this, SLOT(OnRegisterToolWithSurface(bool)));
 
 	//create connection for saving tool data before registration
 	connect(m_Controls->m_AcceptToolData, SIGNAL(clicked()), this, SLOT(OnAcceptToolData()));
@@ -167,7 +167,9 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 
 
 	connect(m_Controls->m_RegistrationSurfaceComboBox, SIGNAL(OnSelectionChanged(const mitk::DataNode *)), this, SLOT(m_RegistrationSurfaceChanged(const mitk::DataNode *)));
-	
+	connect(m_Controls->m_ToolToSurfaceRegistration, SIGNAL(toggled(bool)), this, SLOT(OnToolToSurfaceRegistration(bool)));
+	connect(m_Controls->m_GeneralRegistration, SIGNAL(toggled(bool)), this, SLOT(OnGeneralRegistration(bool)));
+
 	//create connection for saving transform into a file
 	connect(m_Controls->m_ChooseTransformFile, SIGNAL(clicked()), this, SLOT(OnChooseTransformFileClicked()));
 
@@ -230,9 +232,9 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	m_Controls->m_TransformFileName->setText(QDir::toNativeSeparators(QDir::homePath()) + QDir::separator() + "transform.csv");
 
 
-	m_Controls->m_ToolForRegistrationComboBox->SetDataStorage(this->GetDataStorage());
-	m_Controls->m_ToolForRegistrationComboBox->SetAutoSelectNewItems(false);
-	m_Controls->m_ToolForRegistrationComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
+	m_Controls->m_ToolForPositioningComboBox->SetDataStorage(this->GetDataStorage());
+	m_Controls->m_ToolForPositioningComboBox->SetAutoSelectNewItems(false);
+	m_Controls->m_ToolForPositioningComboBox->SetPredicate(mitk::NodePredicateDataType::New("Surface"));
 
 	//The TargetSurfaceComboBox includes all the surface models that are currently in the DataStorage.
 	m_Controls->m_TargetSurfaceComboBox->SetDataStorage(this->GetDataStorage());
@@ -478,7 +480,7 @@ if (this->m_toolStorage.IsNull())
 	}
     }
 
-  m_MaxillofacialTrackingLab = new MITKMaxillofacialTrackingLab(m_toolStorage->GetToolCount());
+  m_MaxillofacialTrackingLab = new MITKMaxillofacialTrackingLab();
 
   //connect to device
   try
@@ -935,7 +937,16 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupNavigation()
 
 	//Initialize elements for surface orientation
 	m_SurfaceGeometricalTransform = new SurfaceGeometricalTransform[m_ToolVisualizationFilter->GetNumberOfOutputs()];
+	
+	for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
+	{
+		m_SurfaceGeometricalTransform[i].node_name = "-";
+		m_SurfaceGeometricalTransform[i].surface_node = NULL;
+		m_SurfaceGeometricalTransform[i].SurfaceRelated = false;
+		m_SurfaceGeometricalTransform[i].SurfaceToToolTransform = NULL;
+		m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = NULL;
 
+	}
 
 	//Initialize tool ListBox, reference ListBox, and associated surface ListBox
 
@@ -944,6 +955,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupNavigation()
 		QListWidgetItem * item = new QListWidgetItem();
 		item->setText("-");
 		m_Controls->m_Surfaces->addItem(item);
+
 	}
 
 	for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
@@ -960,6 +972,8 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupNavigation()
 		reference_item->setText("-");
 		m_Controls->m_IsReferenceFramework->addItem(reference_item);
 	}
+
+	
 
 }
 
@@ -1058,60 +1072,19 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupTool()
 
 	if (surface_item->text().toStdString() == "-")
 	{
-		m_Controls->m_AddToolSurfacePair->setChecked(false);	
+		m_Controls->m_RegisterToolWithSurface->setChecked(false);
 		m_Controls->m_RegistrationSurfaceComboBox->setEnabled(false);
 	}
 	else
 	{
-		m_Controls->m_AddToolSurfacePair->setChecked(true);
+		m_Controls->m_RegisterToolWithSurface->setChecked(true);
 		m_Controls->m_RegistrationSurfaceComboBox->setEnabled(true);
 	}
 
 }
 
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
-{	
 
-	int index = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID();
-	
-	//Check for initialization
-	if (!CheckRegistrationInitialization()) return;
-
-	m_MaxillofacialTrackingLab->CalculateRegistration(index, m_ImageFiducialsDataNode, m_TrackerFiducialsDataNode);
-	
-	m_Controls->m_RegistrationWidget->SetQualityDisplayText("FRE: " + QString::number(m_MaxillofacialTrackingLab->GetRegistrationFRE(index)) + " mm");
-	
-	vtkMatrix4x4 * matrix = m_MaxillofacialTrackingLab->GetVTKRegistrationTransform(index)->GetMatrix();
-	
-	//Transform Tracker Fiducials to the position on the Image World 
-	m_TrackerFiducialsDataNode->GetData()->GetGeometry()->Compose(matrix);
-	m_TrackerFiducialsDataNode->GetData()->GetTimeGeometry()->Update();
-	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
-
-
-	m_Controls->m_UsePermanentRegistrationToggle->setEnabled(true);
-
-	//save transform to file
-	std::ofstream myfile;	
-
-	std::cout << "Matrix: " << *matrix << std::endl;
-	
-	std::string filename = this->m_Controls->m_TransformFileName->text().toStdString().c_str();
-	try
-	{
-		std::ofstream myfile(filename);
-		myfile << *matrix;
-		myfile.close();
-	}
-	catch (...)
-	{
-		std::string warningmessage = "Transform file has not being specified or does not exist. Registration will not be saved on file.";
-		QMessageBox::warning(NULL, "IGTPlayer: Error", warningmessage.c_str());
-	}	
-}
-
-
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAssociateSurface(bool on)
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnRegisterToolWithSurface(bool on)
 {
 	if (on)
 	{
@@ -1173,11 +1146,16 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAcceptToolData()
 			}
 			
 		}
+
+		if (item->text().compare("Reference framework") == 0)
+		{
+			m_ThereIsAReference = true;
+			m_Reference_Index = index;
+		}
 	}
 
-	if (m_Controls->m_AddToolSurfacePair->isChecked())
+	if (m_Controls->m_RegisterToolWithSurface->isChecked())
 	{
-
 		QString surface_name = QString::fromStdString(m_Controls->m_RegistrationSurfaceComboBox->GetSelectedNode()->GetProperty("name")->GetValueAsString());
 		QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
 		surface_item->setText(surface_name);
@@ -1187,6 +1165,83 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAcceptToolData()
 	
 	item = NULL;
 }
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
+{
+
+	int index = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID();
+
+	//Check for initialization
+	if (!CheckRegistrationInitialization()) return;
+
+	m_MaxillofacialTrackingLab->CalculateRegistration(m_ImageFiducialsDataNode, m_TrackerFiducialsDataNode);
+
+	m_Controls->m_RegistrationWidget->SetQualityDisplayText("FRE: " + QString::number(m_MaxillofacialTrackingLab->GetRegistrationFRE()) + " mm");
+
+	vtkMatrix4x4 * matrix = m_MaxillofacialTrackingLab->GetVTKRegistrationTransform()->GetMatrix();
+
+	//Transform Tracker Fiducials to the position on the Image World 
+	m_TrackerFiducialsDataNode->GetData()->GetGeometry()->Compose(matrix);
+	m_TrackerFiducialsDataNode->GetData()->GetTimeGeometry()->Update();
+	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
+
+
+	m_Controls->m_UsePermanentRegistrationToggle->setEnabled(true);
+
+	//save transform to file
+	std::ofstream myfile;
+
+	std::cout << "Matrix: " << *matrix << std::endl;
+
+	std::string filename = this->m_Controls->m_TransformFileName->text().toStdString().c_str();
+	try
+	{
+		std::ofstream myfile(filename);
+		myfile << *matrix;
+		myfile.close();
+	}
+	catch (...)
+	{
+		std::string warningmessage = "Transform file has not being specified or does not exist. Registration will not be saved on file.";
+		QMessageBox::warning(NULL, "IGTPlayer: Error", warningmessage.c_str());
+	}
+
+	SaveSurfaceToToolRegistrationTransform();
+}
+
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::SaveSurfaceToToolRegistrationTransform()
+{
+	int index = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID();
+
+	if (m_Controls->m_ToolToSurfaceRegistration->isChecked())
+	{
+		m_SurfaceGeometricalTransform[index].surface_node = m_Controls->m_RegistrationSurfaceComboBox->GetSelectedNode();
+		m_SurfaceGeometricalTransform[index].node_name = m_SurfaceGeometricalTransform[index].surface_node->GetName();
+		m_SurfaceGeometricalTransform[index].SurfaceRelated = true;
+		itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+		m_MaxillofacialTrackingLab->GetITKRegistrationTransform()->GetInverse(matrix);
+		m_SurfaceGeometricalTransform[index].SurfaceToToolTransform = matrix;
+	}
+
+	else
+
+	{
+		m_GeneralRegistrationTransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+		m_GeneralRegistrationTransform = m_MaxillofacialTrackingLab->GetITKRegistrationTransform();
+	}
+}
+
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnToolToSurfaceRegistration(bool on)
+{
+	m_Controls->m_GeneralRegistration->setChecked(!on);
+}
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnGeneralRegistration(bool on)
+{
+	m_Controls->m_ToolToSurfaceRegistration->setChecked(!on);
+}
+
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 {
 	
@@ -1201,7 +1256,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 		for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
 		{
-			if (m_ThereIsAReference)
+			if (m_ThereIsAReference) // All the tools and surfaces must be represented with respect to the reference framework
 			{
 				std::cout << "Reference Index : " << m_Reference_Index << std::endl;
 				m_Original_Reference_Orientation = m_ToolVisualizationFilter->GetOutput(m_Reference_Index)->GetAffineTransform3D();
@@ -1214,56 +1269,52 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 					//We set the full orientation and the registration now, since later we won't allow any changes in position or orientation for this tool
 					m_Total_Reference_Orientation->Compose(m_Original_Reference_Orientation);
-					m_Total_Reference_Orientation->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform(i));
+					m_Total_Reference_Orientation->Compose(m_GeneralRegistrationTransform);
 					m_ToolVisualizationFilter->SetOffset(i, m_Total_Reference_Orientation);
 					
 				}
 				else
 				{
 					m_TotalOrientationTransform->SetIdentity();
-					//m_TotalOrientationTransform->Compose(m_Reference_Orientation_Inverse);
-					m_TotalOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform(i));
+					m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
 					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
+
+					if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
+					{
+						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+						matrix->SetIdentity();
+						matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+						matrix->Compose(m_GeneralRegistrationTransform);
+						m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(matrix);
+						m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
+						m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+						m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+					}
+
 				}
 			}
 
-			else
+			else // If there is no reference framework, we give priority to the tool that we are using for the registration
 			{
-				m_ToolVisualizationFilter->SetOffset(i, m_MaxillofacialTrackingLab->GetITKRegistrationTransform(i));
+
+				if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
+				{
+					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+					matrix->SetIdentity();
+					matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+					matrix->Compose(m_GeneralRegistrationTransform);
+					m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(matrix);
+					m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
+					m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+					m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+				}
+
+				m_ToolVisualizationFilter->SetOffset(i, m_GeneralRegistrationTransform);
 			}
 
-			
-			QString t = m_Controls->m_Surfaces->item(i)->text();
-			std::string text = t.toStdString();
-			std::cout << text << std::endl;
-			if (text.compare("-") != 0)
-			{
-				mitk::DataNode::Pointer selectedNode = this->GetDataStorage()->GetNamedNode(text);
-				m_SurfaceGeometricalTransform[i].surface_node = selectedNode;
-				m_SurfaceGeometricalTransform[i].node_name = text;
-				m_SurfaceGeometricalTransform[i].SurfaceRelated = true;
-				itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  ToolOrientationTransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-				itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  ToolOrientationTransformInverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-				ToolOrientationTransform->Compose(m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D());
-				//ToolOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
-				ToolOrientationTransform->GetInverse(ToolOrientationTransformInverse);
-				m_SurfaceGeometricalTransform[i].ToolAffineTransform0Inverse = ToolOrientationTransformInverse;
-			}
-			else
-			{
-				m_SurfaceGeometricalTransform[i].node_name = text;
-				m_SurfaceGeometricalTransform[i].surface_node = NULL;
-				m_SurfaceGeometricalTransform[i].SurfaceRelated = false;
-				m_SurfaceGeometricalTransform[i].ToolAffineTransform0Inverse = NULL;
-			}
 			m_ToolVisualizationFilter->Update();
 		}
 
-		m_ToolVisualizationFilter->Update();
-		
-		//TO-DO
-		m_ThereIsAReference = true;
-		m_ThereIsAReference = false;
 
 		//From this point, we won't visualize the changes in orientation or position for the tool that represents the reference marker. Instead, the changes will
 		//be applied to the rest of the context (inverted)
@@ -1274,10 +1325,10 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 			m_ToolVisualizationFilter->SetTransformPosition(m_Reference_Index, false);
 		}
 
-		//TO-DO fix this. if there is already
+		//TO-DO fix this.
 		if (m_PSRecordingPointSet.IsNotNull())
 		{
-			m_PSRecordingPointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform(0));
+			m_PSRecordingPointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
 		}
 	
 		mitk::RenderingManager::GetInstance()->RequestUpdateAll();
@@ -1303,14 +1354,14 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 		if (m_PSRecordingPointSet.IsNotNull())
 		{
-			m_PSRecordingPointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse(0));
+			m_PSRecordingPointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse());
 		}
 
 		//Undo registration in distance line TO-DO
 
 		if (m_DistanceLinePointSet.IsNotNull())
 		{
-			m_DistanceLinePointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse(0));
+			m_DistanceLinePointSet->GetGeometry()->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse());
 		}
 	}
 }
@@ -1388,6 +1439,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::InitializeRegistration()
 
 		ds->Add(m_ImageFiducialsDataNode);
 	}
+
 	m_Controls->m_RegistrationWidget->SetImageFiducialsNode(m_ImageFiducialsDataNode);
 
 	if (m_TrackerFiducialsDataNode.IsNull())
@@ -1454,7 +1506,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAddRegistrationTrackingFidu
 {
 	mitk::NavigationData::Pointer nd = m_InstrumentNavigationData;
 
-	std::string tool_name = m_Controls->m_ToolForRegistrationComboBox->GetSelectedNode()->GetName();
+	std::string tool_name = m_Controls->m_ToolForPositioningComboBox->GetSelectedNode()->GetName();
 
 	std::cout << tool_name << std::endl;
 	for (int i = 0; i < m_toolStorage->GetToolCount(); i++)
@@ -1502,7 +1554,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 			if (m_PermanentRegistration)
 			{
 				if (i != m_Reference_Index)
-
 				{
 					//If Current_pos = G * Orig_Pos => G = Current_pos * (Orig_pos)^-1 ; 
 					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
@@ -1515,7 +1566,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 					//The total transform includes the effect of the marker movement (G^-1) and the registration to the virtual world (ITKRegistrationTransform). 
 					m_TotalOrientationTransform->SetIdentity();
 					m_TotalOrientationTransform->Compose(m_Reference_Orientation_Inverse);
-					m_TotalOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform(i));
+					m_TotalOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
 					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);	
 				}
 			}
@@ -1532,11 +1583,12 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 				if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
 				{
 					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surface_matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-					surface_matrix->SetIdentity();
-					surface_matrix->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransformInverse(i));
-					surface_matrix->Compose(m_SurfaceGeometricalTransform[i].ToolAffineTransform0Inverse);
+					surface_matrix->SetIdentity();				
+					surface_matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+					surface_matrix->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
 					surface_matrix->Compose(m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D());
-					surface_matrix->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform(i));				
+					surface_matrix->Compose(m_GeneralRegistrationTransform);
+		
 					m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(surface_matrix);
 					m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
 				}
