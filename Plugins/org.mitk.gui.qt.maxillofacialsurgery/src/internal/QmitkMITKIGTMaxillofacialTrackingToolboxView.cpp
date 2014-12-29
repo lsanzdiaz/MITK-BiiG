@@ -97,6 +97,10 @@ QmitkMITKIGTMaxillofacialTrackingToolboxView::QmitkMITKIGTMaxillofacialTrackingT
   //Initialize distance calculation elements
   m_ReferencePositionDataNode = NULL;
   m_ReferencePositionDataNode = NULL;
+
+
+  //Initialize tracking lab
+  m_MaxillofacialTrackingLab = new MITKMaxillofacialTrackingLab();
 }
 
 QmitkMITKIGTMaxillofacialTrackingToolboxView::~QmitkMITKIGTMaxillofacialTrackingToolboxView()
@@ -310,6 +314,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings()
 	this->OnAddSingleToolFinished();
 	
 	
+	//Set Tool2 values
 	ToolName = "RigidBody";
 	ToolDefinitionFile = "J:/Optitrack/RigidBody_definition/RigidBody.txt";
 	ToolRepresentationObject = "J:/Optitrack/RigidBody_definition/RigidBody.stl";
@@ -322,6 +327,26 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings()
 
 	this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
 	this->OnAddSingleToolFinished();
+
+
+	//Set Tool3 values
+	ToolName = "RigidBodyJaw";
+	ToolDefinitionFile = "J:/Optitrack/RigidBodyJaw_definition/RigidBodyJaw.txt";
+	//ToolRepresentationObject = "J:/Optitrack/RigidBodyJaw_definition/RigidBodyJaw.stl";
+	ToolRepresentationObject = "";
+	
+	this->OnAddSingleTool();
+
+	this->m_Controls->m_NavigationToolCreationWidget->PreloadToolSettings(ToolName, ToolDefinitionFile, ToolRepresentationObject);
+
+
+	this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
+	this->OnAddSingleToolFinished();
+
+
+
+
+
 	m_Controls->m_ShowTrackingVolume->setChecked(false);
 
 	this->OnConnect();
@@ -335,6 +360,9 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings()
 
 	//Open surface model
 	std::string m_SurfaceName = "J:/External_resources/Mandibula/Jaw.stl";
+	LoadModel(m_SurfaceName);
+
+	m_SurfaceName = "J:/External_resources/Renders_craneo/Craneo2aOpcion_LabelUnica_decimate2.stl";
 	LoadModel(m_SurfaceName);
 	
  	GlobalReinit();
@@ -480,7 +508,7 @@ if (this->m_toolStorage.IsNull())
 	}
     }
 
-  m_MaxillofacialTrackingLab = new MITKMaxillofacialTrackingLab();
+  
 
   //connect to device
   try
@@ -1056,7 +1084,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupTool()
 		}
 		else
 		{
-			std::cout << "Tool is a reference framework" << std::endl;
+			std::cout << "Tool is not reference framework" << std::endl;
 			m_Controls->m_ToolIsReferenceFramework->setChecked(false);
 			m_ReferenceFrameworkChecked = false;
 		}
@@ -1159,6 +1187,13 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAcceptToolData()
 		QString surface_name = QString::fromStdString(m_Controls->m_RegistrationSurfaceComboBox->GetSelectedNode()->GetProperty("name")->GetValueAsString());
 		QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
 		surface_item->setText(surface_name);
+		surface_item = NULL;
+	}
+
+	else
+	{
+		QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
+		surface_item->setText("-");
 		surface_item = NULL;
 	}
 
@@ -1275,10 +1310,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 				}
 				else
 				{
-					m_TotalOrientationTransform->SetIdentity();
-					m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
-					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
-
 					if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
 					{
 						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
@@ -1290,6 +1321,10 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 						m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 						m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
 					}
+
+					m_TotalOrientationTransform->SetIdentity();
+					m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
+					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
 
 				}
 			}
@@ -1563,11 +1598,32 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 					//Now we get G^-1 and we will have to apply it to the tools that are not a reference marker
 					matrix->GetInverse(m_Reference_Orientation_Inverse);
 
-					//The total transform includes the effect of the marker movement (G^-1) and the registration to the virtual world (ITKRegistrationTransform). 
+					//The total transform includes the effect of the reference framework movement (inverted, G^-1) and the registration to the virtual world (ITKRegistrationTransform). 
 					m_TotalOrientationTransform->SetIdentity();
 					m_TotalOrientationTransform->Compose(m_Reference_Orientation_Inverse);
-					m_TotalOrientationTransform->Compose(m_MaxillofacialTrackingLab->GetITKRegistrationTransform());
+					m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
 					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);	
+
+					
+					//Locate the related surface on the right position and orientation before including the registration
+					if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
+					{
+						std::cout << "Surface " << i << ":" << m_SurfaceGeometricalTransform[i].SurfaceRelated << std::endl;
+						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surface_matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+						surface_matrix->SetIdentity();
+						surface_matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+						surface_matrix->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+						surface_matrix->Compose(m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D());
+						// includes movement of reference framework and general registration
+						surface_matrix->Compose(m_Reference_Orientation_Inverse); 
+						// includes general registration
+						surface_matrix->Compose(m_GeneralRegistrationTransform);
+						//surface_matrix->Compose(m_GeneralRegistrationTransform);
+
+						m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(surface_matrix);
+						m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
+					}
+
 				}
 			}
 		}
