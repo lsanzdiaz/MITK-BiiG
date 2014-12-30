@@ -464,7 +464,7 @@ if (this->m_toolStorage.IsNull())
   m_TrackingDeviceSource = myTrackingDeviceSourceFactory->CreateTrackingDeviceSource();
   
 
-  m_ToolVisualizationFilter = mitk::NavigationDataObjectVisualizationFilter::New();
+  m_ToolVisualizationFilter = mitk::MaxillofacialVisualizationFilter::New();
   
   for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfIndexedOutputs(); i++)
   {
@@ -479,6 +479,7 @@ if (this->m_toolStorage.IsNull())
 	  m_ToolVisualizationFilter->SetRepresentationObject(i, currentTool->GetDataNode()->GetData());
   }
   
+
   if ( m_TrackingDeviceSource.IsNull() )
   {
     MessageBox(std::string("Cannot connect to device: ") + myTrackingDeviceSourceFactory->GetErrorMessage());
@@ -605,7 +606,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnVirtualConnect()
 	
 	//Create ToolVisualizationFilter and set the output of m_TrackingDeviceSource as an input
 
-	m_ToolVisualizationFilter = mitk::NavigationDataObjectVisualizationFilter::New();
+	m_ToolVisualizationFilter = mitk::MaxillofacialVisualizationFilter::New();
 
 	m_ToolVisualizationFilter->SetInput(0, m_TrackingDeviceSource->GetOutput());
 
@@ -1257,6 +1258,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::SaveSurfaceToToolRegistration
 		itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 		m_MaxillofacialTrackingLab->GetITKRegistrationTransform()->GetInverse(matrix);
 		m_SurfaceGeometricalTransform[index].SurfaceToToolTransform = matrix;
+		
 	}
 
 	else
@@ -1312,14 +1314,26 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 				{
 					if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
 					{
+						/*
 						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 						matrix->SetIdentity();
 						matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
 						matrix->Compose(m_GeneralRegistrationTransform);
 						m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(matrix);
 						m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
+						*/
 						m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 						m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+
+						/*trial*/
+						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surfacetransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+						surfacetransform->SetIdentity();
+						surfacetransform->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+						surfacetransform->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+						//Set SurfaceTransform which will be applied to the surface model associated with the tool
+						m_ToolVisualizationFilter->SetAssociatedSurfaceModel(i, m_SurfaceGeometricalTransform[i].surface_node->GetData());
+						m_ToolVisualizationFilter->SetSurfaceTransform(i, surfacetransform);
+						/*******/
 					}
 
 					m_TotalOrientationTransform->SetIdentity();
@@ -1334,14 +1348,27 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 				if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
 				{
+					/*
 					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 					matrix->SetIdentity();
 					matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
 					matrix->Compose(m_GeneralRegistrationTransform);
 					m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(matrix);
 					m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
+					*/
 					m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 					m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+					
+					/*trial*/
+					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surfacetransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+					surfacetransform->SetIdentity();
+					surfacetransform->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+					surfacetransform->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+					//Set SurfaceTransform which will be applied to the surface model associated with the tool
+					m_ToolVisualizationFilter->SetAssociatedSurfaceModel(i, m_SurfaceGeometricalTransform[i].surface_node->GetData());
+					m_ToolVisualizationFilter->SetSurfaceTransform(i, surfacetransform);
+					/*******/
+				
 				}
 
 				m_ToolVisualizationFilter->SetOffset(i, m_GeneralRegistrationTransform);
@@ -1604,49 +1631,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 					m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
 					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);	
 
-					
-					//Locate the related surface on the right position and orientation before including the registration
-					if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
-					{
-						std::cout << "Surface " << i << ":" << m_SurfaceGeometricalTransform[i].SurfaceRelated << std::endl;
-						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surface_matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-						surface_matrix->SetIdentity();
-						surface_matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
-						surface_matrix->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
-						surface_matrix->Compose(m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D());
-						// includes movement of reference framework and general registration
-						surface_matrix->Compose(m_Reference_Orientation_Inverse); 
-						// includes general registration
-						surface_matrix->Compose(m_GeneralRegistrationTransform);
-						//surface_matrix->Compose(m_GeneralRegistrationTransform);
-
-						m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(surface_matrix);
-						m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
-					}
-
-				}
-			}
-		}
-	}
-	else
-	{
-		for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
-		{
-			if (m_PermanentRegistration)
-			{
-				std::cout << "Surface " << i << ":" << m_SurfaceGeometricalTransform[i].SurfaceRelated << std::endl;
-				//Locate the related surface on the right position and orientation before including the registration
-				if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
-				{
-					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surface_matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-					surface_matrix->SetIdentity();				
-					surface_matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
-					surface_matrix->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
-					surface_matrix->Compose(m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D());
-					surface_matrix->Compose(m_GeneralRegistrationTransform);
-		
-					m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(surface_matrix);
-					m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
 				}
 			}
 		}

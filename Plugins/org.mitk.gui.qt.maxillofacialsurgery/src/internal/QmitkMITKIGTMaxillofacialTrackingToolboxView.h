@@ -29,7 +29,8 @@ See LICENSE.txt or http://www.mitk.org for details.
 //mitk headers
 #include <mitkNavigationToolStorage.h>
 #include <mitkTrackingDeviceSource.h>
-#include <mitkNavigationDataObjectVisualizationFilter.h>
+//#include <mitkNavigationDataObjectVisualizationFilter.h>
+#include "mitkMaxillofacialVisualizationFilter.h"
 #include <mitkNavigationDataRecorder.h>
 #include <mitkCameraVisualization.h>
 
@@ -266,7 +267,7 @@ private:
 
 	/** @members for the filter pipeline */
    mitk::TrackingDeviceSource::Pointer m_TrackingDeviceSource; ///> member for the source of the IGT pipeline
-   mitk::NavigationDataObjectVisualizationFilter::Pointer m_ToolVisualizationFilter; ///> holds the tool visualization filter (second filter of the IGT pipeline)
+   mitk::MaxillofacialVisualizationFilter::Pointer m_ToolVisualizationFilter; ///> holds the tool visualization filter (second filter of the IGT pipeline)
    mitk::NavigationDataRecorder::Pointer m_loggingFilter; ///> holds the logging filter if logging is on (third filter of the IGT pipeline)
  
    /** @members to store the tracking device general data */
