@@ -474,7 +474,7 @@ p, li { white-space: pre-wrap; }
                        </item>
                      </layout>
                    </item>
-                   <item>
+                   <!-- <item>
                      <layout class="QHBoxLayout" name="verticalLayout_41">
                        <property name="leftMargin">
                          <number>10</number>
@@ -513,7 +513,7 @@ p, li { white-space: pre-wrap; }
                        </item>
                      </layout>
                    </item>
-                   <item>
+                 <item>
                      <layout class="QHBoxLayout" name="verticalLayout_41">
                       <property name="leftMargin">
                         <number>0</number>
@@ -521,7 +521,6 @@ p, li { white-space: pre-wrap; }
                         <property name="rightMargin">
                         <number>0</number>
                         </property>
-
                        <item>
                          <widget class="QListWidget" name="m_ToolList"/>
                        </item>
@@ -535,6 +534,84 @@ p, li { white-space: pre-wrap; }
                          <widget class="QListWidget" name="m_RegistrationDone"/>
                        </item>
                      </layout>
+                   </item>-->
+                    <item>
+                     <widget class="QTableWidget" name="m_ToolInfoTable">
+                       <property name="geometry">
+                         <rect>
+                           <x>0</x>
+                           <y>0</y>
+                           <width>529</width>
+                           <height>200</height>
+                         </rect>
+                       </property>
+                      <property name="rowCount">
+                        <double>3</double>
+                      </property>
+                     <property name="columnCount">
+                        <double>5</double>
+                      </property>
+
+                       <property name="sizePolicy" >
+                         <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                         </sizepolicy>
+                       </property>
+                       <property name="minimumSize" >
+                         <size>
+                           <width>300</width>
+                           <height>0</height>
+                         </size>
+                       </property>
+                       <property name="baseSize" >
+                         <size>
+                           <width>300</width>
+                           <height>200</height>
+                         </size>
+                       </property>
+                       <property name="verticalScrollBarPolicy">
+                         <enum>Qt::ScrollBarAlwaysOff</enum>
+                       </property>
+                        <property name="horizontalScrollBarPolicy">
+                         <enum>Qt::ScrollBarAlwaysOff</enum>
+                       </property>
+                       <property name="editTriggers">
+                         <set>QAbstractItemView::NoEditTriggers</set>
+                       </property>     
+                      <property name="alternatingRowColors" >
+                      <bool>true</bool>
+                       </property>     
+                      <property name="gridStyle" >
+                       <enum>Qt::DotLine</enum>
+                      </property>
+                      
+                       <column>
+                       <property name="text">
+                        <string>Tool</string>
+                       </property>
+                       </column>
+                       <column>
+                       <property name="text">
+                       <string>Reference framework</string>
+                       </property>
+                       </column>
+                      <column>
+                       <property name="text">
+                        <string>Surface</string>
+                       </property>
+                       </column>
+                       <column>
+                       <property name="text">
+                       <string>Tool-Surf Reg.</string>
+                       </property>
+                       </column>
+                        <column>
+                       <property name="text">
+                       <string>General Reg.</string>
+                       </property>
+                       </column>
+                    </widget>
                    </item>
                  </layout>
                </item>

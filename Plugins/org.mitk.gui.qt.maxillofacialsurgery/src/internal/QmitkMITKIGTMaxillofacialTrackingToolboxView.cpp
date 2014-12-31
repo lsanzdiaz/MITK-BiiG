@@ -224,6 +224,10 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
       m_Controls->m_VolumeSelectionBox->addItem(Compatibles[i].Model.c_str());
     }
 
+	m_Controls->m_ToolInfoTable->resizeColumnToContents(1);
+	m_Controls->m_ToolInfoTable->resizeRowsToContents();
+	m_Controls->m_ToolInfoTable->setFocusPolicy(Qt::NoFocus);
+	
     //initialize tool storage
     m_toolStorage = mitk::NavigationToolStorage::New(GetDataStorage());
     m_toolStorage->SetName("MaxillofacialTrackingToolbox Default Storage");
@@ -977,32 +981,33 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupNavigation()
 
 	}
 
-	//Initialize tool ListBox, reference ListBox, and associated surface ListBox
+	//Initialize tool information table
 
 	for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
 	{
-		QListWidgetItem * item = new QListWidgetItem();
-		item->setText("-");
-		m_Controls->m_Surfaces->addItem(item);
-
-	}
-
-	for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
-	{
+		
 		QString tool_name = m_toolStorage->GetTool(i)->GetToolName().c_str();
-		QListWidgetItem *tool_item = new QListWidgetItem;
+		QTableWidgetItem *tool_item = new QTableWidgetItem();
 		tool_item->setText(tool_name);
-		m_Controls->m_ToolList->addItem(tool_item);
-	}
+		m_Controls->m_ToolInfoTable->setItem(i, 0, tool_item);
 
-	for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
-	{
-		QListWidgetItem *reference_item = new QListWidgetItem;
+		QTableWidgetItem *reference_item = new QTableWidgetItem();
 		reference_item->setText("-");
-		m_Controls->m_IsReferenceFramework->addItem(reference_item);
-	}
+		m_Controls->m_ToolInfoTable->setItem(i, 1, reference_item);
 
-	
+		QTableWidgetItem * surface_item = new QTableWidgetItem();
+		surface_item->setText("-");
+		m_Controls->m_ToolInfoTable->setItem(i, 2, surface_item);
+
+		QTableWidgetItem * toolsurfacereg_item = new QTableWidgetItem();
+		toolsurfacereg_item->setText("-");
+		m_Controls->m_ToolInfoTable->setItem(i, 3, toolsurfacereg_item);
+
+		QTableWidgetItem * generalreg_item = new QTableWidgetItem();
+		generalreg_item->setText("Not calc.");
+		m_Controls->m_ToolInfoTable->setItem(i, 4, generalreg_item);
+
+	}
 
 }
 
@@ -1097,9 +1102,22 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSetupTool()
 		m_ReferenceFrameworkChecked = false;
 	}
 
-	QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
+	/*QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
 
 	if (surface_item->text().toStdString() == "-")
+	{
+		m_Controls->m_RegisterToolWithSurface->setChecked(false);
+		m_Controls->m_RegistrationSurfaceComboBox->setEnabled(false);
+	}
+	else
+	{
+		m_Controls->m_RegisterToolWithSurface->setChecked(true);
+		m_Controls->m_RegistrationSurfaceComboBox->setEnabled(true);
+	}*/
+
+	QTableWidgetItem *surfacetable_item = m_Controls->m_ToolInfoTable->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID(),2);
+
+	if (surfacetable_item->text().toStdString() == "-")
 	{
 		m_Controls->m_RegisterToolWithSurface->setChecked(false);
 		m_Controls->m_RegistrationSurfaceComboBox->setEnabled(false);
@@ -1147,59 +1165,65 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnAcceptToolData()
 	m_ThereIsAReference = false;
 	m_Reference_Index = NULL;
 
-	QListWidgetItem *item = new QListWidgetItem();
 
 	for (int index = 0; index < m_toolStorage->GetToolCount(); index++)
 	{
 
-		item = m_Controls->m_IsReferenceFramework->item(index);
-
+		QTableWidgetItem *table_item = m_Controls->m_ToolInfoTable->item(index, 1);
 		if (m_ReferenceFrameworkChecked)
 		{
 			if (index == m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID())
 			{
-				item->setText("Reference framework");
+				table_item->setText("Reference framework");
 				m_ThereIsAReference = true;
 				m_Reference_Index = index;
 			}
 			else
 			{
-				item->setText("-");
+				table_item->setText("-");
 			}
 		}
 		else
 		{
 			if (index == m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID())
 			{
-				item->setText("-");
+				table_item->setText("-");
 			}
-			
+
 		}
 
-		if (item->text().compare("Reference framework") == 0)
+		if (table_item->text().compare("Reference framework") == 0)
 		{
 			m_ThereIsAReference = true;
 			m_Reference_Index = index;
 		}
+		table_item = NULL;
 	}
 
 	if (m_Controls->m_RegisterToolWithSurface->isChecked())
 	{
 		QString surface_name = QString::fromStdString(m_Controls->m_RegistrationSurfaceComboBox->GetSelectedNode()->GetProperty("name")->GetValueAsString());
-		QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
-		surface_item->setText(surface_name);
-		surface_item = NULL;
+
+		QTableWidgetItem *surface_tableitem = m_Controls->m_ToolInfoTable->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID(),2);
+		surface_tableitem->setText(surface_name);
+		surface_tableitem = NULL;
+
+		QTableWidgetItem * toolsurfacereg_item = m_Controls->m_ToolInfoTable->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID(), 3);
+		toolsurfacereg_item->setText("Not calc.");
+		toolsurfacereg_item = NULL;
 	}
 
 	else
 	{
-		QListWidgetItem *surface_item = m_Controls->m_Surfaces->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID());
-		surface_item->setText("-");
-		surface_item = NULL;
+		QTableWidgetItem *surface_tableitem = m_Controls->m_ToolInfoTable->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID(), 2);
+		surface_tableitem->setText("-");
+		surface_tableitem = NULL;
+
+		QTableWidgetItem * toolsurfacereg_item = m_Controls->m_ToolInfoTable->item(m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID(), 3);
+		toolsurfacereg_item->setText("-");
+		toolsurfacereg_item = NULL;
 	}
 
-	
-	item = NULL;
 }
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
@@ -1258,7 +1282,9 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::SaveSurfaceToToolRegistration
 		itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 		m_MaxillofacialTrackingLab->GetITKRegistrationTransform()->GetInverse(matrix);
 		m_SurfaceGeometricalTransform[index].SurfaceToToolTransform = matrix;
-		
+		QTableWidgetItem * toolsurfacereg_item = m_Controls->m_ToolInfoTable->item(index, 3);
+		toolsurfacereg_item->setText("Calculated");
+		toolsurfacereg_item = NULL;
 	}
 
 	else
@@ -1266,6 +1292,13 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::SaveSurfaceToToolRegistration
 	{
 		m_GeneralRegistrationTransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 		m_GeneralRegistrationTransform = m_MaxillofacialTrackingLab->GetITKRegistrationTransform();
+
+		for (unsigned int i = 0; i < m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
+		{
+			QTableWidgetItem * generalreg_item = m_Controls->m_ToolInfoTable->item(i, 4);
+			generalreg_item->setText("Calculated");
+			generalreg_item = NULL;
+		}
 	}
 }
 
@@ -1314,32 +1347,35 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 				{
 					if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
 					{
-						/*
-						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-						matrix->SetIdentity();
-						matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
-						matrix->Compose(m_GeneralRegistrationTransform);
-						m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(matrix);
-						m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
-						*/
-						m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-						m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+						if(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform.IsNotNull())
+						{
+							m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+							m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
 
-						/*trial*/
-						itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surfacetransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-						surfacetransform->SetIdentity();
-						surfacetransform->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
-						surfacetransform->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
-						//Set SurfaceTransform which will be applied to the surface model associated with the tool
-						m_ToolVisualizationFilter->SetAssociatedSurfaceModel(i, m_SurfaceGeometricalTransform[i].surface_node->GetData());
-						m_ToolVisualizationFilter->SetSurfaceTransform(i, surfacetransform);
-						/*******/
+							itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer surfacetransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
+							surfacetransform->SetIdentity();
+							surfacetransform->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
+							surfacetransform->Compose(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
+							//Set SurfaceTransform which will be applied to the surface model associated with the tool
+							m_ToolVisualizationFilter->SetAssociatedSurfaceModel(i, m_SurfaceGeometricalTransform[i].surface_node->GetData());
+							m_ToolVisualizationFilter->SetSurfaceTransform(i, surfacetransform);
+							QTableWidgetItem * toolsurfacereg_item = m_Controls->m_ToolInfoTable->item(i, 3);
+							toolsurfacereg_item->setText("Registered");
+							toolsurfacereg_item = NULL;
+						
+						}
+						else
+						{
+							
+							std::string warningMessage = "Calculate surface->tool registration.";						
+							MITK_WARN << warningMessage;
+							QMessageBox::warning(NULL, "Tool-to surface registration not possible", warningMessage.c_str());
+						}
 					}
 
 					m_TotalOrientationTransform->SetIdentity();
 					m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
 					m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
-
 				}
 			}
 
@@ -1348,14 +1384,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 
 				if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
 				{
-					/*
-					itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer matrix = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
-					matrix->SetIdentity();
-					matrix->Compose(m_SurfaceGeometricalTransform[i].SurfaceToToolTransform);
-					matrix->Compose(m_GeneralRegistrationTransform);
-					m_SurfaceGeometricalTransform[i].surface_node->GetData()->GetGeometry()->SetIndexToWorldTransform(matrix);
-					m_SurfaceGeometricalTransform[i].surface_node->GetData()->Modified();
-					*/
 					m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 					m_ToolVisualizationFilter->GetOutput(i)->GetAffineTransform3D()->GetInverse(m_SurfaceGeometricalTransform[i].ToolPositionAtRegistrationTime_Inverse);
 					
@@ -1368,13 +1396,19 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 					m_ToolVisualizationFilter->SetAssociatedSurfaceModel(i, m_SurfaceGeometricalTransform[i].surface_node->GetData());
 					m_ToolVisualizationFilter->SetSurfaceTransform(i, surfacetransform);
 					/*******/
-				
+					QTableWidgetItem * toolsurfacereg_item = m_Controls->m_ToolInfoTable->item(i, 3);
+					toolsurfacereg_item->setText("Registered");
+					toolsurfacereg_item = NULL;
 				}
 
 				m_ToolVisualizationFilter->SetOffset(i, m_GeneralRegistrationTransform);
 			}
 
 			m_ToolVisualizationFilter->Update();
+
+			QTableWidgetItem * generalreg_item = m_Controls->m_ToolInfoTable->item(i, 4);
+			generalreg_item->setText("Registered");
+			generalreg_item = NULL;
 		}
 
 
@@ -1408,6 +1442,20 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 		for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
 		{
 		   m_ToolVisualizationFilter->SetOffset(i, NULL);
+
+		   QTableWidgetItem * generalreg_item = m_Controls->m_ToolInfoTable->item(i, 4);
+		   generalreg_item->setText("Calculated");
+		   generalreg_item = NULL;
+
+		   if (m_SurfaceGeometricalTransform[i].SurfaceRelated)
+		   {
+			   QTableWidgetItem * toolsurfacereg_item = m_Controls->m_ToolInfoTable->item(i, 3);
+			   toolsurfacereg_item->setText("Calculated");
+			   toolsurfacereg_item = NULL;
+
+			   m_ToolVisualizationFilter->SetAssociatedSurfaceModel(i, NULL);
+			   m_ToolVisualizationFilter->SetSurfaceTransform(i, NULL);
+		   }
 		}
 
 		m_ToolVisualizationFilter->Update();
