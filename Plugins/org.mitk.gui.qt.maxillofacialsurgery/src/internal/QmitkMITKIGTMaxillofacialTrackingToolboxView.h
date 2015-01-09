@@ -34,6 +34,8 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <mitkNavigationDataRecorder.h>
 #include <mitkCameraVisualization.h>
 
+
+
 //vtk headers
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
@@ -210,7 +212,12 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	/***********************Preload calibration files, tools, surface models, registration data *****************/
 
 	/** @brief This slot allows for loading all the calibration files, tools, STLs, and registration data together in one step.*/
-	void OnPreloadSettings();
+	void OnPreloadSettings(std::string filename);
+
+	/** @brief This slot is called if the user wants to load a new settings file. A new window opens where the user can choose a file. If the chosen file is
+	corrupt or not valid the user gets an error message. If the file was loaded successfully the tools are show in the tool status widget. */
+	void OnChooseSettingsFileClicked();
+	void OnPreloadSettingsClicked();
 
   protected:
 

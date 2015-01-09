@@ -55,6 +55,11 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 #include <mitkSTLFileReader.h>
 
+//XML Reader
+
+#include "tinyxml.h"
+#include <istream>
+
 const std::string QmitkMITKIGTMaxillofacialTrackingToolboxView::VIEW_ID = "org.mitk.views.QMITKMITKIGTMaxillofacialTrackingToolbox";
 
 QmitkMITKIGTMaxillofacialTrackingToolboxView::QmitkMITKIGTMaxillofacialTrackingToolboxView()
@@ -92,12 +97,9 @@ QmitkMITKIGTMaxillofacialTrackingToolboxView::QmitkMITKIGTMaxillofacialTrackingT
   m_Original_Reference_Orientation_Inverse = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
   m_TotalOrientationTransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 
- 
-
   //Initialize distance calculation elements
   m_ReferencePositionDataNode = NULL;
   m_ReferencePositionDataNode = NULL;
-
 
   //Initialize tracking lab
   m_MaxillofacialTrackingLab = new MITKMaxillofacialTrackingLab();
@@ -159,8 +161,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	connect(m_Controls->m_RegistrationWidget, SIGNAL(AddedTrackingFiducial()), this, SLOT(OnAddRegistrationTrackingFiducial()));
 	connect(m_Controls->m_RegistrationWidget, SIGNAL(PerformFiducialRegistration()), this, SLOT(OnCalculateRegistration()));
 	
-	
-	
 	connect(m_Controls->m_PointSetRecordCheckBox, SIGNAL(toggled(bool)), this, SLOT(OnPointSetRecording(bool)));
 	connect(m_Controls->m_DistanceControlCheckBox, SIGNAL(toggled(bool)), this, SLOT(OnDistanceControl(bool)));
 	connect(m_Controls->m_DistanceCalculationBetweenPointsWidget, SIGNAL(AddedReferencePosition()), this, SLOT(OnAddReferencePosition()));
@@ -184,7 +184,9 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
     connect(m_Controls->m_csvFormat, SIGNAL(clicked()), this, SLOT(OnToggleFileExtension()));
     connect(m_Controls->m_xmlFormat, SIGNAL(clicked()), this, SLOT(OnToggleFileExtension()));
 
-
+	//create connection for reading XML file and preload settings
+	connect(m_Controls->m_PreloadSettingsBtn, SIGNAL(clicked()), this, SLOT(OnPreloadSettingsClicked()));
+	connect(m_Controls->m_ChooseSettingsFileBtn, SIGNAL(clicked()), this, SLOT(OnChooseSettingsFileClicked()));
 	//initialize widgets
     m_Controls->m_configurationWidget->EnableAdvancedUserControl(false);
     m_Controls->m_TrackingToolsStatusWidget->SetShowPositions(true);
@@ -217,7 +219,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	//m_Controls->m_LoadTools->setVisible(false);
 
     //Update List of available models for selected tool.
-    std::vector<mitk::TrackingDeviceData> Compatibles = mitk::GetDeviceDataForLine( m_Controls->m_configurationWidget->GetTrackingDevice()->GetType());
+    std::vector<mitk::TrackingDeviceData> Compatibles = mitk::GetDeviceDataForLine(m_Controls->m_configurationWidget->GetTrackingDevice()->GetType());
     m_Controls->m_VolumeSelectionBox->clear();
     for(int i = 0; i < Compatibles.size(); i++)
     {
@@ -292,63 +294,71 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::LoadModel(std::string filenam
 	}
 }
 
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings()
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings(std::string filename)
 {
+	std::string CalibrationFile;
 	std::string ToolName;
 	std::string ToolDefinitionFile;
 	std::string ToolRepresentationObject;
-	//TO-DO: Read xml
+
 	
-	//Set Tracking device values
-	std::string CalibrationFile = "J:/Optitrack/Calibration/Calibration.cal";
+	//m_Controls->m_configurationWidget->
+
+
+	//TiXmlDocument doc("J:/External_resources/PreloadSettings.xml");
+	TiXmlDocument doc(filename);
 	
-	m_Controls->m_configurationWidget->SetOptitrackCalibrationFile(CalibrationFile);
-	
-	
-	OnResetTools();
-	//Set Tool1 values
-	ToolName = "Pointer";
-	ToolDefinitionFile = "J:/Optitrack/Tool_definition/PunteroPolaris.txt";
-	ToolRepresentationObject = "J:/Optitrack/Tool_definition/ndi_polaris_tool.stl";
-	
-	this->OnAddSingleTool();
-	this->m_Controls->m_NavigationToolCreationWidget->PreloadToolSettings(ToolName, ToolDefinitionFile, ToolRepresentationObject);
-	
-	this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
-	this->OnAddSingleToolFinished();
-	
-	
-	//Set Tool2 values
-	ToolName = "RigidBody";
-	ToolDefinitionFile = "J:/Optitrack/RigidBody_definition/RigidBody.txt";
-	ToolRepresentationObject = "J:/Optitrack/RigidBody_definition/RigidBody.stl";
+	if (doc.LoadFile())
+	{
+		TiXmlHandle hDoc(&doc);
+		TiXmlElement *pData, *pTrackingDevice, *pToolData, *pTool;
+		
+		m_Controls->m_configurationWidget->SetTrackingDeviceType(3);
 
+		//Data
+		pData = doc.FirstChildElement("Data");
+		if (pData)
+		{
 
-	this->OnAddSingleTool();
-	
-	this->m_Controls->m_NavigationToolCreationWidget->PreloadToolSettings(ToolName, ToolDefinitionFile, ToolRepresentationObject);
+			//Tracking Device Data
+			pTrackingDevice = pData->FirstChildElement("TrackingDevice");
+			if (pTrackingDevice)
+			{		
+				CalibrationFile = pTrackingDevice->Attribute("CalibrationFile");
+				m_Controls->m_configurationWidget->SetOptitrackCalibrationFile(CalibrationFile);
+			}
 
+			//Tool data
+			pToolData = pData->FirstChildElement("ToolData");
+			if (pToolData)
+			{
+				OnResetTools();
+				pTool = pToolData->FirstChildElement("Tool");
+				int i = 0; // for sorting the entries
+				while (pTool)
+				{
+					ToolName = pTool->Attribute("Name");
+					ToolDefinitionFile = pTool->Attribute("ToolDefinition");
+					ToolRepresentationObject = pTool->Attribute("ToolRepresentation");
 
-	this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
-	this->OnAddSingleToolFinished();
+					//Create tool with xml parsed tool information
+					this->OnAddSingleTool();
+					this->m_Controls->m_NavigationToolCreationWidget->PreloadToolSettings(ToolName, ToolDefinitionFile, ToolRepresentationObject);
+					this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
+					this->OnAddSingleToolFinished();
 
-
-	//Set Tool3 values
-	ToolName = "RigidBodyJaw";
-	ToolDefinitionFile = "J:/Optitrack/RigidBodyJaw_definition/RigidBodyJaw.txt";
-	//ToolRepresentationObject = "J:/Optitrack/RigidBodyJaw_definition/RigidBodyJaw.stl";
-	ToolRepresentationObject = "";
-	
-	this->OnAddSingleTool();
-
-	this->m_Controls->m_NavigationToolCreationWidget->PreloadToolSettings(ToolName, ToolDefinitionFile, ToolRepresentationObject);
-
-
-	this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
-	this->OnAddSingleToolFinished();
-
-
-
+					//Go to next tool node
+					pTool = pTool->NextSiblingElement("Tool");
+					i++;
+				}
+				std::cout << "Tool Number: " << i << std::endl;
+			}
+		}
+	}
+	else
+	{
+		std::cout << "Could not load XML File." << std::endl;
+	}
 
 
 	m_Controls->m_ShowTrackingVolume->setChecked(false);
@@ -357,12 +367,10 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings()
 	this->OnStartTracking();
 	
 	
-	m_InstrumentNavigationData = m_TrackingDeviceSource->GetOutput(0);
+	//m_InstrumentNavigationData = m_TrackingDeviceSource->GetOutput(0);
 	
-	InitializeRegistration();
 
-
-	//Open surface model
+	//TO-DO Open surface models
 	std::string m_SurfaceName = "J:/External_resources/Mandibula/Jaw.stl";
 	LoadModel(m_SurfaceName);
 
@@ -538,6 +546,9 @@ if (this->m_toolStorage.IsNull())
   m_Controls->m_StartTracking->setEnabled(true);
   m_Controls->m_StopTracking->setEnabled(false);
   m_Controls->m_Connect->setEnabled(false);
+
+  m_Controls->m_PreloadSettingsFileName->setEnabled(false);
+
   DisableOptionsButtons();
   DisableTrackingConfigurationButtons();
   m_Controls->m_configurationWidget->ConfigurationFinished();
@@ -672,6 +683,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnDisconnect()
   m_Controls->m_StartTracking->setEnabled(false);
   m_Controls->m_StopTracking->setEnabled(false);
   m_Controls->m_Connect->setEnabled(true);
+  m_Controls->m_PreloadSettingsFileName->setEnabled(true);
   EnableOptionsButtons();
   EnableTrackingConfigurationButtons();
   m_Controls->m_configurationWidget->Reset();
@@ -810,8 +822,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnTrackingDeviceChanged()
     m_Controls->m_VolumeSelectionBox->addItem(Compatibles[i].Model.c_str());
   }
 
-
-  this->OnPreloadSettings();
 }
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnTrackingVolumeChanged(QString qstr)
@@ -1753,6 +1763,30 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 	
+}
+
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnChooseSettingsFileClicked()
+{
+	QDir currentPath = QFileInfo(m_Controls->m_PreloadSettingsFileName->text()).dir();
+
+	// if no path was selected (QDir would select current working dir then) or the
+	// selected path does not exist -> use home directory
+	if (currentPath == QDir() || !currentPath.exists())
+	{
+		currentPath = QDir(QDir::homePath());
+	}
+
+	QString filename = QFileDialog::getOpenFileName(NULL, tr("Choose Preload Settings File"), currentPath.absolutePath(), "*.xml");
+
+	std::cout << filename.toStdString() << std::endl;
+	if (filename == "") return;
+	this->m_Controls->m_PreloadSettingsFileName->setText(filename);
+}
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettingsClicked()
+{
+	std::cout << m_Controls->m_PreloadSettingsFileName->text().toStdString() << std::endl;
+	OnPreloadSettings(m_Controls->m_PreloadSettingsFileName->text().toStdString());
 }
 
 void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnChooseFileClicked()
