@@ -477,13 +477,13 @@ void mitk::OptitrackTrackingTool::updateTool()
     else
     {
       this->SetDataValid(false);
-      MITK_DEBUG << "Trackable: "<< this->m_ToolName << "is not Tracked";
+	  MITK_DEBUG << "Trackable: "<< this->m_ToolName << "is not Tracked";
     }
   }
   else
   {
-    this->SetDataValid(false);
-    MITK_DEBUG << "Update Failed";
+   this->SetDataValid(true);
+ MITK_DEBUG << "Update Failed";
   }
 }
 

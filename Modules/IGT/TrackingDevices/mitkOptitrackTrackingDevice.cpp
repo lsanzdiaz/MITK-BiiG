@@ -461,16 +461,19 @@ void mitk::OptitrackTrackingDevice::TrackTools()
     while ((this->GetState() == mitk::TrackingDevice::Tracking) && (localStopTracking == false))
     {
       // For each Tracked Tool update the position and orientation
+	std::cout << "Number of Optitrack tools: " << GetToolCount() << std::endl;
       for (  int i = 0; i < GetToolCount(); ++i)  // use mutexed methods to access tool container
       {
         OptitrackTrackingTool* currentTool = this->GetOptitrackTool(i);
         if(currentTool != nullptr)
         {
           currentTool->updateTool();
+		 std::cout << "Tool number " << i << " updated position" << std::endl;
           MITK_DEBUG << "Tool number " << i << " updated position";
-        }
+	    }
         else
         {
+		 std::cout << "Get data from tool number " << i << " failed" << std::endl;
           MITK_DEBUG << "Get data from tool number " << i << " failed";
           mitkThrowException(mitk::IGTException) << "Get data from tool number " << i << " failed";
         }
@@ -480,7 +483,7 @@ void mitk::OptitrackTrackingDevice::TrackTools()
       this->m_StopTrackingMutex->Lock();
       localStopTracking = m_StopTracking;
       this->m_StopTrackingMutex->Unlock();
-      Sleep(OPTITRACK_FRAME_RATE);
+      Sleep(1);
     } // tracking ends if we pass this line
 
     m_TrackingFinishedMutex->Unlock(); // transfer control back to main thread
