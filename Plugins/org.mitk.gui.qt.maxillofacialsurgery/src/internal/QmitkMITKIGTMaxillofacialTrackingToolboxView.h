@@ -47,8 +47,8 @@ See LICENSE.txt or http://www.mitk.org for details.
 typedef struct SurfaceGeometricalTransform
 {
 	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer SurfaceToToolTransform;
-	//itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer ToolToVirtualWorldTransform;
 	itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer ToolPositionAtRegistrationTime_Inverse;
+	std::string SurfaceToToolRegistrationFile;
 	bool SurfaceRelated;
 	mitk::DataNode::Pointer surface_node;
 	std::string node_name;
@@ -107,7 +107,14 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 
     /** @brief This slot is called if the user wants to choose a file name for logging. A new windows to navigate through the file system and choose
                a file opens.*/
-    void OnChooseFileClicked();
+
+	void OnSaveCurrentSettingsClicked();
+
+	/* @brief This slot is called if the user wants to choose a file name to save the registration transform.A new windows to navigate through the file system and choose
+		a file opens */
+	void OnChooseTransformFileNameClicked();
+
+	void OnChooseFileClicked();
 
     /** @brief This slot starts logging. Logging is only possible if a device is tracking. If not the logging mechanism start when the start tracking
                is called.*/
@@ -178,9 +185,6 @@ class QmitkMITKIGTMaxillofacialTrackingToolboxView : public QmitkAbstractView
 	
 	void OnAddRegistrationTrackingFiducial();
 
-	/** @brief This slot is called if the user wants to choose a file name to save the registration transform. A new windows to navigate through the file system and choose
-	a file opens.*/
-	void OnChooseTransformFileClicked();
 
 	/** @brief This slot is called if the user wants to accept the necessary data for a selected tool before the registration step.
 	This data is: 
@@ -333,6 +337,8 @@ private:
 
    SurfaceGeometricalTransform *m_SurfaceGeometricalTransform;
    itk::ScalableAffineTransform<mitk::ScalarType, 3U>::Pointer  m_GeneralRegistrationTransform;
+
+   std::string m_GeneralRegistrationFile;
 };
 
 

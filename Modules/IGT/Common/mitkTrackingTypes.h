@@ -92,7 +92,9 @@ namespace mitk
       VirtualTracker,            ///< Virtual Tracking device class that produces random tracking coordinates
       TrackingSystemNotSpecified,///< entry for not specified or initialized tracking system
       TrackingSystemInvalid,      ///< entry for invalid state (mainly for testing)
-    NPOptitrack               ///< NaturalPoint: Optitrack optical Tracking System
+    NPOptitrack,               ///< NaturalPoint: Optitrack optical Tracking System
+	AscensionMEDSAFE,		  /// Ascension MEDSAFE Electromagnetic tracker
+	Conoprobe		  /// Conoprobe device
     };
 
 
@@ -136,6 +138,7 @@ namespace mitk
   static TrackingDeviceData DeviceDataAuroraPlanarCube = {NDIAurora, "Aurora Planar (Cube)", "NDIAurora.stl", "9"};
   static TrackingDeviceData DeviceDataAuroraPlanarDome = {NDIAurora, "Aurora Planar (Dome)","NDIAuroraPlanarFG_Dome.stl", "A"};
   static TrackingDeviceData DeviceDataAuroraTabletop = {NDIAurora, "Aurora Tabletop", "NDIAuroraTabletopFG_Dome.stl", "A"};
+ 
   // The following entry is for the tabletop prototype, which had an lower barrier of 8cm. The new version has a lower barrier of 12cm.
   //static TrackingDeviceData DeviceDataAuroraTabletopPrototype = {NDIAurora, "Aurora Tabletop Prototype", "NDIAuroraTabletopFG_Prototype_Dome.stl"};
 
@@ -154,15 +157,23 @@ namespace mitk
   static TrackingDeviceData DeviceDataDaVinci = {IntuitiveDaVinci, "Intuitive DaVinci", "IntuitiveDaVinci.stl","X"};
   static TrackingDeviceData DeviceDataMicroBird = {AscensionMicroBird, "Ascension MicroBird", "", "X"};
   static TrackingDeviceData DeviceDataVirtualTracker = {VirtualTracker, "Virtual Tracker", "cube","X"};
+
+ 
+
+
   static TrackingDeviceData DeviceDataMicronTrackerH40 = {ClaronMicron, "Micron Tracker H40", "ClaronMicron.stl", "X"};
   static TrackingDeviceData DeviceDataUnspecified = {TrackingSystemNotSpecified, "Unspecified System", "cube","X"};
   // Careful when changing the "invalid" device: The mitkTrackingTypeTest is using it's data.
   static TrackingDeviceData DeviceDataInvalid = {TrackingSystemInvalid, "Invalid Tracking System", "", "X"};
 
+  static TrackingDeviceData DeviceDataAscensionMEDSAFE = {AscensionMEDSAFE, "Ascension MEDSAFE", "cube", "X" };
+
+  static TrackingDeviceData DeviceDataConoprobe = {Conoprobe, "Conoprobe", "cube", "X" };
+
   //This list should hold all devices defined above!
   static TrackingDeviceData TrackingDeviceList[] = {DeviceDataAuroraPlanarCube, DeviceDataAuroraPlanarDome, DeviceDataAuroraCompact,
   DeviceDataAuroraTabletop, DeviceDataMicronTrackerH40, DeviceDataPolarisSpectra, DeviceDataPolarisVicra, DeviceDataNPOptitrack,
-  DeviceDataDaVinci, DeviceDataMicroBird, DeviceDataVirtualTracker, DeviceDataUnspecified, DeviceDataSpectraExtendedPyramid, DeviceDataInvalid, DeviceDataPolarisOldModel};
+  DeviceDataDaVinci, DeviceDataMicroBird, DeviceDataVirtualTracker, DeviceDataUnspecified, DeviceDataSpectraExtendedPyramid, DeviceDataInvalid, DeviceDataPolarisOldModel, DeviceDataAscensionMEDSAFE, DeviceDataConoprobe};
 
   /**
   * /brief Returns all devices compatibel to the given Line of Devices

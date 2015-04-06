@@ -1,0 +1,1329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QmitkMITKIGTNewbornmonitoringToolboxViewControls</class>
+ <widget class="QWidget" name="QmitkMITKIGTNewbornmonitoringToolboxViewControls">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>529</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>QmitkTemplate</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_main">
+   <item>
+    <widget class="QTabWidget" name="m_MainWidget">
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="tab_1">
+      <attribute name="title">
+       <string>Tracking</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_11">
+       <item>
+        <widget class="QGroupBox" name="groupBox_11">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>700</width>
+           <height>300</height>
+          </size>
+        </property>
+         <property name="title">
+          <string/>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_12">
+          <item>
+           <widget class="QmitkTrackingDeviceConfigurationWidget" name="m_configurationWidget" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="m_PerformVirtualTracking">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="visible">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Perform Virtual Tracking</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="m_TrackingToolsGroupBox">
+           <property name="maximumSize">
+          <size>
+           <width>700</width>
+           <height>300</height>
+          </size>
+        </property>
+         <layout class="QVBoxLayout" name="verticalLayout_13">
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Tracking Tools&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QStackedWidget" name="m_TrackingToolsWidget">
+            <property name="lineWidth">
+             <number>0</number>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <widget class="QWidget" name="page">
+             <layout class="QVBoxLayout" name="verticalLayout_14">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_14">
+                <item>
+                 <layout class="QVBoxLayout" name="m_LoadedToolsLayout">
+                  <item>
+                   <widget class="QLabel" name="m_toolLabel">
+                    <property name="text">
+                     <string>Loaded Tools: &lt;none&gt;</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QmitkToolTrackingStatusWidget" name="m_TrackingToolsStatusWidget" native="true"/>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="m_AddSingleToolLayout">
+                <item>
+                 <spacer name="horizontalSpacer_12">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="m_AddSingleTool">
+                  <property name="minimumSize">
+                   <size>
+                    <width>120</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Add Single Tool</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="m_ResetLayout">
+                <item>
+                 <spacer name="horizontalSpacer_14">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="m_ResetTools">
+                  <property name="minimumSize">
+                   <size>
+                    <width>120</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Reset</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="page_12">
+             <layout class="QVBoxLayout" name="verticalLayout_15">
+              <item>
+               <widget class="QmitkNavigationToolCreationWidget" name="m_NavigationToolCreationWidget" native="true"/>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="m_TrackingControlsGroupBox">
+         <property name="title">
+          <string/>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_16">
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Tracking Control&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="m_TrackingControlLabel">
+            <property name="text">
+             <string>Status: &lt;not configured&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_15">
+            <item>
+             <spacer name="horizontalSpacer_15">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_Connect">
+              <property name="minimumSize">
+               <size>
+                <width>120</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Connect</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_16">
+            <item>
+             <spacer name="horizontalSpacer_16">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_StartTracking">
+              <property name="minimumSize">
+               <size>
+                <width>120</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Start Tracking</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_17">
+            <item>
+             <spacer name="horizontalSpacer_17">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_StopTracking">
+              <property name="minimumSize">
+               <size>
+                <width>120</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Stop Tracking</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+           
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_18">
+            <item>
+             <spacer name="horizontalSpacer_18">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_Disconnect">
+              <property name="minimumSize">
+               <size>
+                <width>120</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Disconnect</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+     
+         </layout>
+        </widget>
+       </item>
+    <!--  <item>
+        <spacer name="verticalSpacer_19">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>-->
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string>Registration</string>
+      </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_41">
+       <item>
+           <widget class="QGroupBox" name="groupBox">
+           <property name="maximumSize">
+          <size>
+           <width>700</width>
+           <height>300</height>
+          </size>
+        </property>
+             <layout class="QVBoxLayout" name="verticalLayout_42">
+               <item>
+                   <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Tool Data&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+               </item>
+               <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">                   
+                   <item>
+                     <widget class="QmitkMaxillofacialNavigationDataSourceSelectionWidget" name="m_TrackingDeviceSelectionWidget" native="true">
+                     </widget>
+                   </item>
+                   <item>
+                     <layout class="QVBoxLayout" name="horizontalLayout_12">
+                       <item>
+                         <widget class="QGroupBox" name="groupBox">
+                          <property name="minimumSize">
+                             <size>
+                               <width>250</width>
+                               <height>100</height>
+                             </size>
+                           </property>
+                           <layout class="QVBoxLayout" name="vLayout_12">
+                             <item>
+                               <widget class="QCheckBox" name="m_ToolIsReferenceFramework">
+                                 <property name="enabled">
+                                   <bool>true</bool>
+                                 </property>
+                                 <property name="visible">
+                                   <bool>true</bool>
+                                 </property>
+                                 <property name="checked">
+                                   <bool>false</bool>                
+                                 </property>
+                                 <property name="text">
+                                   <string>Set tool as reference framework</string>
+                                 </property>
+                               </widget>
+                             </item>
+                             <item>
+                               <widget class="QCheckBox" name="m_RegisterToolWithSurface">
+                                 <property name="enabled">
+                                   <bool>true</bool>
+                                 </property>
+                                 <property name="visible">
+                                   <bool>true</bool>
+                                 </property>
+                                 <property name="text">
+                                   <string>Register with surface:</string>
+                                 </property>
+                               </widget>
+                             </item>
+                             <item>
+                               <widget class="QmitkDataStorageComboBox" name="m_RegistrationSurfaceComboBox">
+                                 <property name="enabled">
+                                   <bool>false</bool>
+                                 </property>
+                               </widget>
+                             </item>
+                           </layout>
+                         </widget>
+                       </item>
+                     </layout>
+                   </item>
+                 </layout>
+               </item>
+               <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_42">
+                   <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_15">
+                       <item>
+                         <spacer name="horizontalSpacer_15">
+                           <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                             <size>
+                               <width>30</width>
+                               <height>20</height>
+                             </size>
+                           </property>
+                         </spacer>
+                       </item>
+                       <item>
+                         <widget class="QPushButton" name="m_AcceptToolData">
+                           <property name="text">
+                             <string>Accept</string>
+                           </property>
+                         </widget>
+                       </item>
+                     </layout>
+                   </item>
+                   <!-- <item>
+                     <layout class="QHBoxLayout" name="verticalLayout_41">
+                       <property name="leftMargin">
+                         <number>10</number>
+                       </property>
+                       <property name="rightMargin">
+                         <number>10</number>
+                       </property>
+                       <item>
+                         <widget class="QLabel" name="label">
+                           <property name="text">
+                             <string>Tool</string>
+                           </property>
+                          
+                         </widget>
+                       </item>
+                       <item>
+                         <widget class="QLabel" name="label">
+                           <property name="text">
+                             <string>Reference framework</string>
+                           </property>
+                         </widget>
+                       </item>
+                       <item>
+                         <widget class="QLabel" name="label">
+                           <property name="text">
+                             <string>Surface</string>
+                           </property>
+                         </widget>
+                       </item>
+                       <item>
+                         <widget class="QLabel" name="label">
+                           <property name="text">
+                             <string>Registration</string>
+                           </property>
+                         </widget>
+                       </item>
+                     </layout>
+                   </item>
+                 <item>
+                     <layout class="QHBoxLayout" name="verticalLayout_41">
+                      <property name="leftMargin">
+                        <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                        <number>0</number>
+                        </property>
+                       <item>
+                         <widget class="QListWidget" name="m_ToolList"/>
+                       </item>
+                       <item>
+                         <widget class="QListWidget" name="m_IsReferenceFramework"/>
+                       </item>
+                       <item>
+                         <widget class="QListWidget" name="m_Surfaces"/>
+                       </item>
+                       <item>
+                         <widget class="QListWidget" name="m_RegistrationDone"/>
+                       </item>
+                     </layout>
+                   </item>-->
+                    <item>
+                     <widget class="QTableWidget" name="m_ToolInfoTable">
+                       <property name="geometry">
+                         <rect>
+                           <x>0</x>
+                           <y>0</y>
+                           <width>529</width>
+                           <height>200</height>
+                         </rect>
+                       </property>
+                      <property name="rowCount">
+                        <double>4</double>
+                      </property>
+                     <property name="columnCount">
+                        <double>5</double>
+                      </property>
+
+                       <property name="sizePolicy" >
+                         <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                         </sizepolicy>
+                       </property>
+                       <property name="minimumSize" >
+                         <size>
+                           <width>300</width>
+                           <height>0</height>
+                         </size>
+                       </property>
+                       <property name="baseSize" >
+                         <size>
+                           <width>300</width>
+                           <height>200</height>
+                         </size>
+                       </property>
+                       <property name="verticalScrollBarPolicy">
+                         <enum>Qt::ScrollBarAlwaysOff</enum>
+                       </property>
+                        <property name="horizontalScrollBarPolicy">
+                         <enum>Qt::ScrollBarAlwaysOff</enum>
+                       </property>
+                       <property name="editTriggers">
+                         <set>QAbstractItemView::NoEditTriggers</set>
+                       </property>     
+                      <property name="alternatingRowColors" >
+                      <bool>true</bool>
+                       </property>     
+                      <property name="gridStyle" >
+                       <enum>Qt::DotLine</enum>
+                      </property>
+                      
+                       <column>
+                       <property name="text">
+                        <string>Tool</string>
+                       </property>
+                       </column>
+                       <column>
+                       <property name="text">
+                       <string>Reference framework</string>
+                       </property>
+                       </column>
+                      <column>
+                       <property name="text">
+                        <string>Surface</string>
+                       </property>
+                       </column>
+                       <column>
+                       <property name="text">
+                       <string>Tool-Surf Reg.</string>
+                       </property>
+                       </column>
+                        <column>
+                       <property name="text">
+                       <string>General Reg.</string>
+                       </property>
+                       </column>
+                    </widget>
+                   </item>
+                 </layout>
+               </item>
+             </layout>
+           </widget>
+         </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox">
+        <property name="maximumSize">
+          <size>
+           <width>700</width>
+           <height>500</height>
+          </size>
+        </property>
+         <layout class="QVBoxLayout" name="verticalLayout_21">
+          <item>
+            <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Point-based Registration&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+               </item>
+           <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+               <property name="topMargin">
+                 <number>5</number>
+               </property>
+                <property name="bottomMargin">
+                 <number>5</number>
+               </property>
+               <item>
+                 <widget class="QLabel" name="m_RegistrationToolLabel">
+                   <property name="text">
+                     <string>Positioning tool:</string>
+                   </property>
+                 <property name="maximumSize">
+                     <size>
+                       <width>160</width>
+                       <height>10</height>
+                     </size>
+                   </property>
+                 </widget>
+               </item>
+               <item>
+                 <widget class="QmitkDataStorageComboBox" name="m_ToolForPositioningComboBox">
+                   <property name="minimumSize">
+                     <size>
+                       <width>200</width>
+                       <height>10</height>
+                     </size>
+                   </property>
+                 </widget>
+               </item>
+             </layout>
+           </item>
+           <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+               <item>
+                 <widget class="QCheckBox" name="m_GeneralRegistration">
+                   <property name="text">
+                     <string>General registration (applied to every tool)</string>
+                   </property>
+                   <property name="maximumSize">
+                     <size>
+                       <width>300</width>
+                       <height>20</height>
+                     </size>
+                   </property>
+                 </widget>
+               </item>
+               <item>
+                 <widget class="QCheckBox" name="m_ToolToSurfaceRegistration">
+                   <property name="text">
+                     <string>Tool to surface registration (applied to selected tool)</string>
+                   </property>
+                   <property name="maximumSize">
+                     <size>
+                       <width>300</width>
+                       <height>20</height>
+                     </size>
+                   </property>
+                 </widget>
+               </item>
+             </layout>
+           </item>
+           <item>
+           <widget class="QmitkMaxillofacialRegistrationWidget" name="m_RegistrationWidget" native="true"/>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="m_UsePermanentRegistrationToggle">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Permanent registration</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_26">
+            <item>
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>Transform filename:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="m_TransformFileName"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_SaveRegistrationTransformBtn">
+              <property name="text">
+               <string>Save Registration</string>
+              </property>
+               <property name="enabled">
+                 <bool>false</bool>
+               </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+      <widget class="QWidget" name="tab_4">
+        <attribute name="title">
+          <string>Trajectory and Distance Control</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_41">
+          <item>
+            <widget class="QGroupBox" name="groupBox_42">
+              <layout class="QVBoxLayout" name="verticalLayout_46">
+                <item>
+                   <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Available tools&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+                </item>
+                <item>
+                  <widget class="QmitkMaxillofacialNavigationDataSourceSelectionWidget" name="m_TrajectoryControlToolSelectionWidget" native="true"/>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <widget class="QGroupBox" name="groupBox_421">
+              <layout class="QHBoxLayout" name="horizontalLayout_41">
+                <item>
+                   <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Trajectory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+                </item>
+                <item>
+                  <spacer name="horizontalSpacer_42">
+                    <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                      <size>
+                        <width>40</width>
+                        <height>20</height>
+                      </size>
+                    </property>
+                  </spacer>
+                </item>
+                <item>
+                  <widget class="QLabel" name="label_41">
+                    <property name="text">
+                      <string>Point Distance [mm]</string>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QSpinBox" name="m_PSRecordingSpinBox">
+                    <property name="value">
+                      <number>1</number>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <spacer name="horizontalSpacer_43">
+                    <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                      <size>
+                        <width>40</width>
+                        <height>20</height>
+                      </size>
+                    </property>
+                  </spacer>
+                </item>
+                <item>
+                  <widget class="QCheckBox" name="m_PointSetRecordCheckBox">
+                    <property name="text">
+                      <string>Show Trajectory</string>
+                    </property>
+                  </widget>
+                </item>
+              </layout>
+            </widget>
+          </item>
+            <item>
+            <widget class="QGroupBox" name="groupBox_421">
+              <layout class="QHBoxLayout" name="horizontalLayout_41">
+                <item>
+                   <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Reference planes&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+                </item>
+                <item>
+                  <widget class="QmitkDataStorageComboBox" name="m_PointsetSelectionBox">
+                    <property name="visible">
+                      <bool>true</bool>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QPushButton" name="m_Interpolate3DModel">
+                    <property name="text">
+                      <string>Get Plane from PointSet</string>
+                    </property>
+                  </widget>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <widget class="QGroupBox" name="groupBox_42">
+              <layout class="QVBoxLayout" name="verticalLayout_46">
+                <item>
+                  <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Point-to-Plane distance&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+                </item>
+                <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_46">
+                    <item>
+                      <widget class="QLabel" name="label_43">
+                        <property name="text">
+                          <string>Surface:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!--<item>
+                      <spacer name="horizontalSpacer_47">
+                        <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                          <size>
+                            <width>0</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                      </spacer>
+                    </item>-->
+                    <item>
+                      <widget class="QmitkDataStorageComboBox" name="m_TargetSurfaceComboBox"> 
+                        <property name="minimumSize">
+                          <size>
+                            <width>100</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </item>
+              <!--  <item>
+                  <spacer name="horizontalSpacer_41">
+                    <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                      <size>
+                        <width>40</width>
+                        <height>20</height>
+                      </size>
+                    </property>
+                  </spacer>
+                </item>-->
+                <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout222">
+                    <item>
+                      <widget class="QCheckBox" name="m_DistanceControlCheckBox">
+                        <property name="text">
+                          <string>Distance Control</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QLabel" name="m_DistanceLabel">
+                        <property name="text">
+                          <string>Distance:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QLineEdit" name="m_ToolDistanceToSurfaceWidget">
+                        <property name="enabled">
+                          <bool>false</bool>
+                        </property>
+                        <property name="minimumSize">
+                          <size>
+                            <width>200</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                        <property name="readOnly">
+                          <bool>true</bool>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <widget class="QGroupBox" name="groupBox_42">
+              <layout class="QVBoxLayout" name="verticalLayout_46">
+                <item>
+                   <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Point-to-Plane distance&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+                </item>
+                <item>
+                  <widget class="QmitkPlotWidget" name="m_DistanceMonitoringWidget" native="true">
+                  </widget>
+                </item>
+              </layout>
+            </widget>
+          </item>
+        </layout>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+      <attribute name="title">
+       <string>Logging</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_51">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_51">
+         <item>
+          <widget class="QLabel" name="label_51">
+           <property name="text">
+            <string>Filename:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="m_LoggingFileName"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="m_ChooseFile">
+           <property name="text">
+            <string>Choose File</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_52">
+         <item>
+          <widget class="QCheckBox" name="m_LoggingLimit">
+           <property name="text">
+            <string>Limit Number Of Logged Frames:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_51">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="m_LoggedFramesLimit">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>9999</number>
+           </property>
+           <property name="value">
+            <number>300</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="m_csvFormat">
+         <property name="text">
+          <string>CSV format</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="m_xmlFormat">
+         <property name="text">
+          <string>XML format</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_51">
+         <property name="title">
+          <string>Logging Status</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_52">
+          <item>
+           <widget class="QLabel" name="m_LoggingLabel">
+            <property name="text">
+             <string>Logging OFF</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="m_LoggedFramesLabel">
+            <property name="text">
+             <string>Logged Frames: 0</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_53">
+         <item>
+          <spacer name="horizontalSpacer_52">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="m_StartLogging">
+           <property name="text">
+            <string>Start Logging</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="m_StopLogging">
+           <property name="text">
+            <string>Stop Logging</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_52">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_6">
+      <attribute name="title">
+       <string>Settings</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_61">
+       <item>
+        <widget class="QCheckBox" name="m_ShowTrackingVolume">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Show Tracking Volume</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_61">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Select Model:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="m_VolumeSelectionBox">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_61">
+         <item>
+          <widget class="QLabel" name="m_OptionsUpdateRateLabel">
+           <property name="text">
+            <string>Update Tracking Rate (Times Per Second)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_62">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="m_UpdateRate">
+           <property name="maximum">
+            <number>999</number>
+           </property>
+           <property name="value">
+            <number>10</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_51">
+            <item>
+              <widget class="QLabel" name="label_51">
+                <property name="text">
+                  <string>Filename:</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="m_PreloadSettingsFileName"/>
+            </item>
+            <item>
+              <widget class="QPushButton" name="m_ChooseSettingsFileBtn">
+                <property name="text">
+                  <string>Choose Settings file</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_PreloadSettingsBtn">
+                <property name="text">
+                  <string>Load</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="m_SaveCurrentSettingsBtn">
+                <property name="text">
+                  <string>Save</string>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+      <item>
+        <spacer name="verticalSpacer_62">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>597</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>-->
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkTrackingDeviceConfigurationWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkTrackingDeviceConfigurationWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkToolTrackingStatusWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkToolTrackingStatusWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkNavigationToolCreationWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkNavigationToolCreationWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkFiducialRegistrationWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkFiducialRegistrationWidget.h</header>
+   <container>1</container>
+  </customwidget>
+   <customwidget>
+   <class>QmitkMaxillofacialRegistrationWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkMaxillofacialRegistrationWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkDataStorageComboBox</class>
+   <extends>QComboBox</extends>
+   <header>QmitkDataStorageComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QmitkDistanceCalculationBetweenPointsWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkDistanceCalculationBetweenPointsWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkMaxillofacialNavigationDataSourceSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkMaxillofacialNavigationDataSourceSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+   <customwidget>
+     <class>QmitkPlotWidget</class>
+     <extends>QWidget</extends>
+     <header>QmitkPlotWidget.h</header>
+   </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

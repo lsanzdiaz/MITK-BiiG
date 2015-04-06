@@ -727,10 +727,13 @@ p, li { white-space: pre-wrap; }
              <widget class="QLineEdit" name="m_TransformFileName"/>
             </item>
             <item>
-             <widget class="QPushButton" name="m_ChooseTransformFile">
+             <widget class="QPushButton" name="m_SaveRegistrationTransformBtn">
               <property name="text">
-               <string>Choose File</string>
+               <string>Save Registration</string>
               </property>
+               <property name="enabled">
+                 <bool>false</bool>
+               </property>
              </widget>
             </item>
            </layout>
@@ -1312,6 +1315,13 @@ p, li { white-space: pre-wrap; }
              <widget class="QPushButton" name="m_PreloadSettingsBtn">
                 <property name="text">
                   <string>Load</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="m_SaveCurrentSettingsBtn">
+                <property name="text">
+                  <string>Save</string>
                 </property>
               </widget>
             </item>

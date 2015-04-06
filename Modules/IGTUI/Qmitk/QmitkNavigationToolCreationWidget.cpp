@@ -80,6 +80,34 @@ void QmitkNavigationToolCreationWidget::CreateConnections()
   }
 }
 
+void QmitkNavigationToolCreationWidget::AddToolFinished()
+{
+
+	this->OnFinished();
+
+}
+
+void QmitkNavigationToolCreationWidget::PreloadToolSettings(std::string ToolName, std::string CalibrationName, std::string ToolRepresentationName)
+{
+
+	//First call initialize
+	//Set default data
+
+	m_Controls->m_ToolNameEdit->setText(ToolName.c_str());
+	m_Controls->m_CalibrationFileName->setText(CalibrationName.c_str());
+
+	if (ToolRepresentationName.compare("") == 0)
+	{
+		m_Controls->m_Surface_Use_Sphere->setChecked(true);
+	}
+	else
+	{
+		m_Controls->m_Surface_Use_Sphere->setChecked(false);
+		m_Controls->m_Surface_Use_Other->setChecked(true);
+		this->OnLoadSurface(ToolRepresentationName);
+	}
+}
+
 void QmitkNavigationToolCreationWidget::Initialize(mitk::DataStorage* dataStorage, std::string supposedIdentifier, std::string supposedName)
 {
   m_DataStorage = dataStorage;
@@ -110,6 +138,10 @@ void QmitkNavigationToolCreationWidget::SetTrackingDeviceType(mitk::TrackingDevi
     m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(2);break;
     case mitk::NPOptitrack:
     m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(3);break;
+	case mitk::AscensionMEDSAFE:
+		m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(4); break;
+	case mitk::Conoprobe:
+		m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(5); break;
   default:
     m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(0);
   }
@@ -134,13 +166,14 @@ void QmitkNavigationToolCreationWidget::OnFinished()
   mitk::DataNode::Pointer newNode = mitk::DataNode::New();
   if(m_Controls->m_Surface_Use_Sphere->isChecked())
   {
+
     //create small sphere and use it as surface
     mitk::Surface::Pointer mySphere = mitk::Surface::New();
-    vtkConeSource *vtkData = vtkConeSource::New();
-    vtkData->SetAngle(5.0);
-    vtkData->SetResolution(50);
-    vtkData->SetHeight(40.0f);
-    vtkData->SetRadius(20.0f);
+    vtkSphereSource *vtkData = vtkSphereSource::New();
+    //vtkData->SetAngle(10);
+    //vtkData->SetResolution(50);
+    //vtkData->SetHeight(40.0f);
+    vtkData->SetRadius(5.0f);
     vtkData->SetCenter(0.0, 0.0, 0.0);
     vtkData->Update();
     mySphere->SetVtkPolyData(vtkData->GetOutput());
@@ -166,7 +199,11 @@ void QmitkNavigationToolCreationWidget::OnFinished()
   else if (m_Controls->m_TrackingDeviceTypeChooser->currentText()=="NDI Polaris") m_CreatedTool->SetTrackingDeviceType(mitk::NDIPolaris);
   else if (m_Controls->m_TrackingDeviceTypeChooser->currentText()=="Claron Technology Micron Tracker") m_CreatedTool->SetTrackingDeviceType(mitk::ClaronMicron);
   else if (m_Controls->m_TrackingDeviceTypeChooser->currentText()=="NP Optitrack") m_CreatedTool->SetTrackingDeviceType(mitk::NPOptitrack);
+  else if (m_Controls->m_TrackingDeviceTypeChooser->currentText() == "AscensionMEDSAFE") m_CreatedTool->SetTrackingDeviceType(mitk::AscensionMEDSAFE);
+  else if (m_Controls->m_TrackingDeviceTypeChooser->currentText() == "Conoprobe") m_CreatedTool->SetTrackingDeviceType(mitk::Conoprobe);
   else m_CreatedTool->SetTrackingDeviceType(mitk::TrackingSystemNotSpecified);
+
+
 
   //ToolType
   if (m_Controls->m_ToolTypeChooser->currentText()=="Instrument") m_CreatedTool->SetType(mitk::NavigationTool::Instrument);
@@ -211,6 +248,28 @@ void QmitkNavigationToolCreationWidget::OnLoadSurface()
   }
 }
 
+void QmitkNavigationToolCreationWidget::OnLoadSurface(std::string filename)
+{
+	mitk::STLFileReader::Pointer stlReader = mitk::STLFileReader::New();
+	try
+	{
+		stlReader->SetFileName(filename.c_str());
+		stlReader->Update();
+	}
+	catch (...)
+	{
+	}
+
+	if (stlReader->GetOutput() == NULL);
+	else
+	{
+		mitk::DataNode::Pointer newNode = mitk::DataNode::New();
+		newNode->SetName(filename);
+		newNode->SetData(stlReader->GetOutput());
+		m_DataStorage->Add(newNode);
+	}
+}
+
 void QmitkNavigationToolCreationWidget::OnLoadCalibrationFile()
 {
   m_Controls->m_CalibrationFileName->setText(QFileDialog::getOpenFileName(NULL,tr("Open Calibration File"), "/", "*.*"));
@@ -232,6 +291,10 @@ void QmitkNavigationToolCreationWidget::SetDefaultData(mitk::NavigationTool::Poi
     m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(2);break;
   case mitk::NPOptitrack:
     m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(3);break;
+  case mitk::AscensionMEDSAFE:
+	  m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(4); break;
+  case mitk::Conoprobe:
+	  m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(5); break;
   default:
     m_Controls->m_TrackingDeviceTypeChooser->setCurrentIndex(0);
   }

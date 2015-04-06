@@ -86,6 +86,9 @@ class MitkIGTUI_EXPORT QmitkTrackingDeviceConfigurationWidget : public QWidget
      */
     bool GetTrackingDeviceConfigured();
 
+	//Set tracking device type
+	void SetTrackingDeviceType(int index);
+
     /** @brief Sets the style of this widget. Default is ADVANCED. Caution: The style can only be set once at startup! */
     void SetGUIStyle(Style style);
 
@@ -95,6 +98,7 @@ class MitkIGTUI_EXPORT QmitkTrackingDeviceConfigurationWidget : public QWidget
       */
     void EnableAdvancedUserControl(bool enable);
 
+	void SetOptitrackCalibrationFile(std::string filename);
 
   signals:
 
@@ -186,6 +190,7 @@ class MitkIGTUI_EXPORT QmitkTrackingDeviceConfigurationWidget : public QWidget
      *         The type (which means Aurora/Polaris/Optitrack) will not be set in the returnvalue. You have to this later.
      */
     mitk::TrackingDevice::Pointer ConfigureOptitrackTrackingDevice();
+
 
     /* @brief Scans the serial ports automatically for a connected tracking device. If the method finds a device
      *        it selects the right type and sets the corresponding port in the widget.

@@ -54,6 +54,8 @@ set(CPP_FILES
   TrackingDevices/mitkOptitrackErrorMessages.cpp
   TrackingDevices/mitkOptitrackTrackingDevice.cpp
   TrackingDevices/mitkOptitrackTrackingTool.cpp
+  TrackingDevices/mitkOptitrackTrackingDevice.cpp
+  TrackingDevices/mitkOptitrackTrackingTool.cpp
 )
 
 set(RESOURCE_FILES
@@ -71,6 +73,15 @@ set(RESOURCE_FILES
   NDIPolarisVicra.stl
 )
 
+if (MITK_USE_ASCENSION_TRACKER)
+  set(CPP_FILES ${CPP_FILES} TrackingDevices/mitkAscensionMEDSAFETrackingDevice.cpp)
+  set(CPP_FILES ${CPP_FILES} TrackingDevices/mitkAscensionMEDSAFETrackingTool.cpp)
+endif (MITK_USE_ASCENSION_TRACKER)
+
+if (MITK_USE_CONOPROBE_TRACKER)
+  set(CPP_FILES ${CPP_FILES} TrackingDevices/mitkConoprobeDevice.cpp)
+  set(CPP_FILES ${CPP_FILES} TrackingDevices/mitkConoprobeTool.cpp)
+endif (MITK_USE_CONOPROBE_TRACKER)
 
 if(MITK_USE_MICRON_TRACKER)
   set(CPP_FILES ${CPP_FILES} TrackingDevices/mitkClaronInterface.cpp)

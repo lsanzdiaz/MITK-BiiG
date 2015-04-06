@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+ <extension point="org.blueberry.ui.views">
+     <view id="org.mitk.views.newbornmonitoring"
+          name="New born monitoring"
+          class="QmitkMITKIGTNewBornMonitoringToolboxView"
+          icon="resources/iconTrackingToolBox.xpm" />
+  </extension>
+ </plugin>

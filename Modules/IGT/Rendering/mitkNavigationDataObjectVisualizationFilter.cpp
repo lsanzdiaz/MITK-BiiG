@@ -150,9 +150,7 @@ void mitk::NavigationDataObjectVisualizationFilter::GenerateData()
       pos.SetVnlVector(nd->GetPosition().GetVnlVector());
       affineTransform->SetOffset(pos);
     }
-    affineTransform->Modified();
-
-
+    affineTransform->Modified();	
     //set the transform to data
     if(offset.IsNotNull()) //first use offset if there is one.
       {

@@ -197,6 +197,17 @@ void QmitkMITKIGTTrackingToolboxView::OnResetTools()
 void QmitkMITKIGTTrackingToolboxView::OnConnect()
   {
   //check if everything is ready to start tracking
+
+	mitk::TrackingDeviceType Type;
+
+	Type = m_Controls->m_configurationWidget->GetTrackingDevice()->GetType();
+		
+	if (Type == mitk::AscensionMEDSAFE) //AscensionMEDSAFE
+	{
+		OnConnectAscensionMEDSAFE();
+		return;
+	}
+
   if (this->m_toolStorage.IsNull())
   {
     MessageBox("Error: No Tools Loaded Yet!");
@@ -286,6 +297,102 @@ void QmitkMITKIGTTrackingToolboxView::OnConnect()
 
   m_Controls->m_TrackingControlLabel->setText("Status: connected");
   }
+
+
+void QmitkMITKIGTTrackingToolboxView::OnConnectAscensionMEDSAFE()
+{
+	
+	//build the IGT pipeline
+	mitk::TrackingDevice::Pointer trackingDevice = this->m_Controls->m_configurationWidget->GetTrackingDevice();
+	trackingDevice->SetData(m_TrackingDeviceData);
+
+	//set device to rotation mode transposed becaus we are working with VNL style quaternions
+	if (m_Controls->m_InverseMode->isChecked())
+		trackingDevice->SetRotationMode(mitk::TrackingDevice::RotationTransposed);
+
+	//Get Tracking Volume Data
+	mitk::TrackingDeviceData data = mitk::DeviceDataUnspecified;
+
+	QString qstr = m_Controls->m_VolumeSelectionBox->currentText();
+	if ((!qstr.isNull()) || (!qstr.isEmpty())) {
+		std::string str = qstr.toStdString();
+		data = mitk::GetDeviceDataByName(str); //Data will be set later, after device generation
+	}
+
+	trackingDevice->OpenConnection();
+
+
+	for (int i = 0; i < trackingDevice->GetToolCount(); i++)
+	{
+		//Create tools and put them in this->m_toolStorage;
+
+		this->OnAddSingleTool();
+		//this->m_Controls->m_NavigationToolCreationWidget->PreloadToolSettings(ToolName, ToolDefinitionFile, ToolRepresentationObject);
+		this->m_Controls->m_NavigationToolCreationWidget->AddToolFinished();
+		this->OnAddSingleToolFinished();
+	}
+
+	//Create Navigation Data Source with the factory class
+	mitk::TrackingDeviceSourceConfigurator::Pointer myTrackingDeviceSourceFactory = mitk::TrackingDeviceSourceConfigurator::New(this->m_toolStorage, trackingDevice);
+	m_TrackingDeviceSource = myTrackingDeviceSourceFactory->CreateTrackingDeviceSource(this->m_ToolVisualizationFilter);
+
+	if (m_TrackingDeviceSource.IsNull())
+	{
+		MessageBox(std::string("Cannot connect to device: ") + myTrackingDeviceSourceFactory->GetErrorMessage());
+		return;
+	}
+
+	//set filter to rotation mode transposed becaus we are working with VNL style quaternions
+	if (m_Controls->m_InverseMode->isChecked())
+		m_ToolVisualizationFilter->SetRotationMode(mitk::NavigationDataObjectVisualizationFilter::RotationTransposed);
+
+	//First check if the created object is valid
+	if (m_TrackingDeviceSource.IsNull())
+	{
+		MessageBox(myTrackingDeviceSourceFactory->GetErrorMessage());
+		return;
+	}
+
+	MITK_INFO << "Number of tools: " << m_TrackingDeviceSource->GetNumberOfOutputs();
+
+	//The tools are maybe reordered after initialization, e.g. in case of auto-detected tools of NDI Aurora
+	mitk::NavigationToolStorage::Pointer toolsInNewOrder = myTrackingDeviceSourceFactory->GetUpdatedNavigationToolStorage();
+	if ((toolsInNewOrder.IsNotNull()) && (toolsInNewOrder->GetToolCount() > 0))
+	{
+		//so delete the old tools in wrong order and add them in the right order
+		//we cannot simply replace the tool storage because the new storage is
+		//not correctly initialized with the right data storage
+		m_toolStorage->DeleteAllTools();
+		for (int i = 0; i < toolsInNewOrder->GetToolCount(); i++) { m_toolStorage->AddTool(toolsInNewOrder->GetTool(i)); }
+	}
+
+	//connect to device
+	try
+	{
+		//m_TrackingDeviceSource->Connect();
+		//Microservice registration:
+		m_TrackingDeviceSource->RegisterAsMicroservice();
+		m_toolStorage->UnRegisterMicroservice();
+		m_toolStorage->RegisterAsMicroservice(m_TrackingDeviceSource->GetMicroserviceID());
+		m_toolStorage->LockStorage();
+	}
+	catch (...) //todo: change to mitk::IGTException
+	{
+		MessageBox("Error on connecting the tracking device.");
+		return;
+	}
+
+	//enable/disable Buttons
+	m_Controls->m_Disconnect->setEnabled(true);
+	m_Controls->m_StartTracking->setEnabled(true);
+	m_Controls->m_StopTracking->setEnabled(false);
+	m_Controls->m_Connect->setEnabled(false);
+	DisableOptionsButtons();
+	DisableTrackingConfigurationButtons();
+	m_Controls->m_configurationWidget->ConfigurationFinished();
+
+	m_Controls->m_TrackingControlLabel->setText("Status: connected");
+}
 
 void QmitkMITKIGTTrackingToolboxView::OnDisconnect()
   {
@@ -394,11 +501,19 @@ void QmitkMITKIGTTrackingToolboxView::OnTrackingDeviceChanged()
     m_Controls->m_AutoDetectTools->setVisible(true);
     m_Controls->m_AddSingleTool->setEnabled(false);
   }
+  else if (Type == mitk::AscensionMEDSAFE)
+  {
+	  m_Controls->m_TrackingToolsGoupBox->setEnabled(false);
+	  m_Controls->m_TrackingControlsGroupBox->setEnabled(true);
+  }
+
   else //Polaris or Microntracker
   {
-    m_Controls->m_AutoDetectTools->setVisible(false);
-    m_Controls->m_AddSingleTool->setEnabled(true);
+	  m_Controls->m_AutoDetectTools->setVisible(false);
+	  m_Controls->m_AddSingleTool->setEnabled(true);
+
   }
+
 
   // Code to select appropriate tracking volume for current type
   std::vector<mitk::TrackingDeviceData> Compatibles = mitk::GetDeviceDataForLine(Type);

@@ -70,6 +70,8 @@ class QmitkMITKIGTTrackingToolboxView : public QmitkFunctionality
     /** @brief This slot connects to the device. In status "connected" configuration of the device is disabled. */
     void OnConnect();
 
+	void OnConnectAscensionMEDSAFE();
+
     /** @brief This slot disconnects from the device. */
     void OnDisconnect();
 

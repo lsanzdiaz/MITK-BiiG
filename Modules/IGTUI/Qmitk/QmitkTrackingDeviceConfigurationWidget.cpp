@@ -18,6 +18,8 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <mitkClaronTrackingDevice.h>
 #include <mitkNDITrackingDevice.h>
 #include <mitkOptitrackTrackingDevice.h>
+#include <mitkAscensionMEDSAFETrackingDevice.h>
+#include <mitkConoprobeDevice.h>
 #include <mitkIGTException.h>
 #include <mitkSerialCommunication.h>
 #include <qscrollbar.h>
@@ -44,6 +46,7 @@ QmitkTrackingDeviceConfigurationWidget::QmitkTrackingDeviceConfigurationWidget(Q
   this->m_TrackingDeviceConfigurated = false;
 
   m_AdvancedUserControl = true;
+  
 }
 
 void QmitkTrackingDeviceConfigurationWidget::SetGUIStyle(QmitkTrackingDeviceConfigurationWidget::Style style)
@@ -226,6 +229,16 @@ void QmitkTrackingDeviceConfigurationWidget::TrackingDeviceChanged()
       }
   }
 
+  else if (m_Controls->m_trackingDeviceChooser->currentIndex() == 4)
+  {
+	  AddOutput("<br>AscensionMEDSAFE selected");
+  }
+
+  else if (m_Controls->m_trackingDeviceChooser->currentIndex() == 5)
+  {
+	  AddOutput("<br>Conoprobe selected");
+  }
+
 emit TrackingDeviceSelectionChanged();
 }
 
@@ -388,6 +401,17 @@ void QmitkTrackingDeviceConfigurationWidget::SetMTCalibrationFileClicked()
     }
   }
 
+void QmitkTrackingDeviceConfigurationWidget::SetOptitrackCalibrationFile(std::string filename)
+{
+	if (filename == "") { return; }
+	else
+	{
+		m_OptitrackCalibrationFile = filename;
+		Poco::Path myPath = Poco::Path(m_OptitrackCalibrationFile.c_str());
+		m_Controls->m_OptitrackCalibrationFile->setText("Calibration File: " + QString(myPath.getFileName().c_str()));
+	}
+}
+
 void QmitkTrackingDeviceConfigurationWidget::SetOptitrackCalibrationFileClicked()
   {
   std::string filename = QFileDialog::getOpenFileName(NULL,tr("Open Calibration File"), "/", "*.*").toAscii().data();
@@ -463,8 +487,30 @@ mitk::TrackingDevice::Pointer QmitkTrackingDeviceConfigurationWidget::ConstructT
     returnValue = ConfigureOptitrackTrackingDevice();
     returnValue->SetType(mitk::NPOptitrack);
   }
+
+  else if (m_Controls->m_trackingDeviceChooser->currentIndex() == 4)
+  {
+	  returnValue = static_cast<mitk::TrackingDevice*>(mitk::AscensionMEDSAFETrackingDevice::New());
+	  
+	  returnValue->SetType(mitk::AscensionMEDSAFE);
+  }
+
+  else if (m_Controls->m_trackingDeviceChooser->currentIndex() == 5)
+  {
+	  returnValue = static_cast<mitk::TrackingDevice*>(mitk::ConoprobeDevice::New());
+
+	  returnValue->SetType(mitk::Conoprobe);
+  }
+
   return returnValue;
   }
+
+void QmitkTrackingDeviceConfigurationWidget::SetTrackingDeviceType(int index)
+{
+	m_Controls->m_trackingDeviceChooser->setCurrentIndex(index);
+	
+	//TrackingDeviceChanged();
+}
 
 mitk::TrackingDevice::Pointer QmitkTrackingDeviceConfigurationWidget::ConfigureNDI5DTrackingDevice()
   {

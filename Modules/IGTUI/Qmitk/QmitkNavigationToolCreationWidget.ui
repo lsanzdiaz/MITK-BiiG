@@ -57,6 +57,11 @@
          <string>NP Optitrack</string>
         </property>
        </item>
+        <item>
+          <property name="text">
+            <string>AscensionMEDSAFE</string>
+          </property>
+        </item>
       </widget>
      </item>
     </layout>

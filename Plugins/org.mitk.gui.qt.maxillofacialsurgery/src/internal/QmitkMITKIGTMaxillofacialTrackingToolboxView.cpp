@@ -174,9 +174,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	connect(m_Controls->m_ToolToSurfaceRegistration, SIGNAL(toggled(bool)), this, SLOT(OnToolToSurfaceRegistration(bool)));
 	connect(m_Controls->m_GeneralRegistration, SIGNAL(toggled(bool)), this, SLOT(OnGeneralRegistration(bool)));
 
-	//create connection for saving transform into a file
-	connect(m_Controls->m_ChooseTransformFile, SIGNAL(clicked()), this, SLOT(OnChooseTransformFileClicked()));
-
     //create connections for logging tab
 	connect(m_Controls->m_ChooseFile, SIGNAL(clicked()), this, SLOT(OnChooseFileClicked()));
     connect(m_Controls->m_StartLogging, SIGNAL(clicked()), this, SLOT(StartLogging()));
@@ -187,6 +184,12 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
 	//create connection for reading XML file and preload settings
 	connect(m_Controls->m_PreloadSettingsBtn, SIGNAL(clicked()), this, SLOT(OnPreloadSettingsClicked()));
 	connect(m_Controls->m_ChooseSettingsFileBtn, SIGNAL(clicked()), this, SLOT(OnChooseSettingsFileClicked()));
+
+	// create connection for saving transform into a file
+	connect(m_Controls->m_SaveRegistrationTransformBtn, SIGNAL(clicked()), this, SLOT(OnChooseTransformFileNameClicked()));
+
+	connect(m_Controls->m_SaveCurrentSettingsBtn, SIGNAL(clicked), this, SLOT(OnSaveCurrentSettingsClicked()));
+
 	//initialize widgets
     m_Controls->m_configurationWidget->EnableAdvancedUserControl(false);
     m_Controls->m_TrackingToolsStatusWidget->SetShowPositions(true);
@@ -236,10 +239,10 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::CreateQtPartControl( QWidget 
     m_toolStorage->RegisterAsMicroservice("no tracking device");
 
     //set home directory as default path for logfile
-    m_Controls->m_LoggingFileName->setText(QDir::toNativeSeparators(QDir::homePath()) + QDir::separator() + "logfile.csv");
+    m_Controls->m_LoggingFileName->setText(QDir::toNativeSeparators(QDir::homePath()) + QDir::separator() + "logfile.txt");
   
 	//set home directory as default path for logfile
-	m_Controls->m_TransformFileName->setText(QDir::toNativeSeparators(QDir::homePath()) + QDir::separator() + "transform.csv");
+	m_Controls->m_TransformFileName->setText(QDir::toNativeSeparators(QDir::homePath()) + QDir::separator() + "transform.txt");
 
 
 	m_Controls->m_ToolForPositioningComboBox->SetDataStorage(this->GetDataStorage());
@@ -301,11 +304,6 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings(std::string
 	std::string ToolDefinitionFile;
 	std::string ToolRepresentationObject;
 
-	
-	//m_Controls->m_configurationWidget->
-
-
-	//TiXmlDocument doc("J:/External_resources/PreloadSettings.xml");
 	TiXmlDocument doc(filename);
 	
 	if (doc.LoadFile())
@@ -358,6 +356,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnPreloadSettings(std::string
 	else
 	{
 		std::cout << "Could not load XML File." << std::endl;
+		return;
 	}
 
 
@@ -480,7 +479,7 @@ if (this->m_toolStorage.IsNull())
   
   for (unsigned int i = 0; i<m_TrackingDeviceSource->GetNumberOfIndexedOutputs(); i++)
   {
-	  mitk::NavigationTool::Pointer currentTool = this->m_toolStorage->GetToolByName(m_TrackingDeviceSource->GetOutput(i)->GetName());
+	  mitk::NavigationTool::Pointer currentTool = this->m_toolStorage->GetTool(i);
 	  std::cout << "Tool Name" << m_TrackingDeviceSource->GetOutput(i)->GetName() << endl;
 	  if (currentTool.IsNull())
 	  {
@@ -1262,19 +1261,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnCalculateRegistration()
 	std::ofstream myfile;
 
 	std::cout << "Matrix: " << *matrix << std::endl;
-
-	std::string filename = this->m_Controls->m_TransformFileName->text().toStdString().c_str();
-	try
-	{
-		std::ofstream myfile(filename);
-		myfile << *matrix;
-		myfile.close();
-	}
-	catch (...)
-	{
-		std::string warningmessage = "Transform file has not being specified or does not exist. Registration will not be saved on file.";
-		QMessageBox::warning(NULL, "IGTPlayer: Error", warningmessage.c_str());
-	}
+	m_Controls->m_SaveRegistrationTransformBtn->setEnabled(true);
 
 	SaveSurfaceToToolRegistrationTransform();
 }
@@ -1302,7 +1289,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::SaveSurfaceToToolRegistration
 	{
 		m_GeneralRegistrationTransform = itk::ScalableAffineTransform<mitk::ScalarType, 3U>::New();
 		m_GeneralRegistrationTransform = m_MaxillofacialTrackingLab->GetITKRegistrationTransform();
-
+		
 		for (unsigned int i = 0; i < m_TrackingDeviceSource->GetNumberOfOutputs(); i++)
 		{
 			QTableWidgetItem * generalreg_item = m_Controls->m_ToolInfoTable->item(i, 4);
@@ -1375,8 +1362,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnApplyRegistration(bool on)
 						
 						}
 						else
-						{
-							
+						{					
 							std::string warningMessage = "Calculate surface->tool registration.";						
 							MITK_WARN << warningMessage;
 							QMessageBox::warning(NULL, "Tool-to surface registration not possible", warningMessage.c_str());
@@ -1693,17 +1679,33 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::UpdateTrackingTimer()
 			}
 		}
 	}
+
+	else
+	{
+		if (m_PermanentRegistration)
+		{
+			for (int i = 0; i < m_ToolVisualizationFilter->GetNumberOfOutputs(); i++)
+			{
+				//The total transform includes the effect of the reference framework movement (inverted, G^-1) and the registration to the virtual world (ITKRegistrationTransform). 
+				m_TotalOrientationTransform->SetIdentity();
+				m_TotalOrientationTransform->Compose(m_GeneralRegistrationTransform);
+				m_ToolVisualizationFilter->SetOffset(i, m_TotalOrientationTransform);
+			}
+		}
+	}
 	
 	m_ToolVisualizationFilter->Update();
 	m_Controls->m_TrackingToolsStatusWidget->Refresh();
 	
 	//TO-DO
-	mitk::NavigationData::Pointer nd = m_ToolVisualizationFilter->GetOutput(0);
+	mitk::NavigationData::Pointer nd;
 	mitk::NavigationData::Pointer T_Object = mitk::NavigationData::New(m_TotalOrientationTransform, false);
-	nd->Compose(T_Object);
+	
 	
 	if ((m_DistanceControl && m_DistanceLinePointSet.IsNotNull()) || (m_PointSetRecording && m_PSRecordingPointSet.IsNotNull()))
 	{
+		nd = m_ToolVisualizationFilter->GetOutput(m_Controls->m_TrajectoryControlToolSelectionWidget->GetSelectedToolID());
+		nd->Compose(T_Object);
 		if (m_LastToolPosition.IsNotNull())
 		{
 			mitk::Point3D p = m_LastToolPosition->GetPosition();
@@ -1806,7 +1808,7 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnChooseFileClicked()
   this->OnToggleFileExtension(this->m_Controls->m_LoggingFileName);
   }
 
-void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnChooseTransformFileClicked()
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnSaveCurrentSettingsClicked()
 {
 	QDir currentPath = QFileInfo(m_Controls->m_TransformFileName->text()).dir();
 
@@ -1817,10 +1819,77 @@ void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnChooseTransformFileClicked(
 		currentPath = QDir(QDir::homePath());
 	}
 
-	QString filename = QFileDialog::getSaveFileName(NULL, tr("Choose Logging File"), currentPath.absolutePath(), "*.*");
+	QString filename = QFileDialog::getSaveFileName(NULL, tr("Choose name for registration Transform file"), currentPath.absolutePath(), "*.*");
 	if (filename == "") return;
 	this->m_Controls->m_TransformFileName->setText(filename);
 	OnToggleFileExtension(m_Controls->m_TransformFileName);
+}
+
+void QmitkMITKIGTMaxillofacialTrackingToolboxView::OnChooseTransformFileNameClicked()
+{
+	QDir currentPath = QFileInfo(m_Controls->m_TransformFileName->text()).dir();
+// if no path was selected (QDir would select current working dir then) or the
+	// selected path does not exist -> use home directory
+	if (currentPath == QDir() || !currentPath.exists())
+	{
+		currentPath = QDir(QDir::homePath());
+		QString filename = QFileDialog::getSaveFileName(NULL, tr("Choose name for registration Transform file"), currentPath.absolutePath(), ".xml");
+		if (filename == "") return;
+		this->m_Controls->m_TransformFileName->setText(filename);
+	}
+
+	//OnToggleFileExtension(m_Controls->m_TransformFileName);
+
+	vtkMatrix4x4 * matrix = m_MaxillofacialTrackingLab->GetVTKRegistrationTransform()->GetMatrix();
+
+	//TO-DO write transform file name in settings when pressing save current settings button
+	std::string transformfilename = this->m_Controls->m_TransformFileName->text().toStdString().c_str();
+	try
+	{	
+		TiXmlDocument doc;
+		TiXmlDeclaration * decl = new TiXmlDeclaration("1.0", "utf-8", "");
+		
+		doc.LinkEndChild(decl);
+
+		TiXmlElement * data;
+		TiXmlElement * row;
+
+		data = new TiXmlElement("Data");
+		doc.LinkEndChild(data);
+		
+		for (int i = 0; i < 4; i++)
+		{
+			row = new TiXmlElement("row");
+			row->SetDoubleAttribute("col0", matrix->GetElement(i, 0));
+			row->SetDoubleAttribute("col1", matrix->GetElement(i, 1));
+			row->SetDoubleAttribute("col2", matrix->GetElement(i, 2));
+			row->SetDoubleAttribute("col3", matrix->GetElement(i, 3));
+			data->LinkEndChild(row);
+		}
+
+		TiXmlElement * error;
+		error = new TiXmlElement("error");
+		error->SetDoubleAttribute("value", 0);
+		data->LinkEndChild(error);
+
+		doc.SaveFile(transformfilename);
+
+	}
+	catch (...)
+	{
+		std::string warningmessage = "Transform file has not being specified or does not exist. Registration will not be saved on file.";
+		QMessageBox::warning(NULL, "IGTPlayer: Error", warningmessage.c_str());
+	}
+
+	if (m_Controls->m_GeneralRegistration->isChecked() == true)
+	{
+		m_GeneralRegistrationFile = transformfilename;
+	}
+	else
+	{
+		int index = m_Controls->m_TrackingDeviceSelectionWidget->GetSelectedToolID();
+		m_SurfaceGeometricalTransform[index].SurfaceToToolRegistrationFile = transformfilename;
+	}
 }
 
 // bug-16470: toggle file extension after clicking on radio button

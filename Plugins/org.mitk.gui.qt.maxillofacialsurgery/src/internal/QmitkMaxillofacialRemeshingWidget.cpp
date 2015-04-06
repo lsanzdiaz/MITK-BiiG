@@ -198,7 +198,7 @@ void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
   mitk::DataNode::Pointer selectedNode = m_Controls->m_surfaceComboBox->GetSelectedNode();
   mitk::Surface::ConstPointer surface = static_cast<mitk::Surface*>(selectedNode->GetData());
 
-  mitk::Surface::Pointer surface2 = static_cast<mitk::Surface*>(selectedNode->GetData());
+  //mitk::Surface::Pointer surface2 = static_cast<mitk::Surface*>(selectedNode->GetData());
 
   int numVertices = m_Controls->numVerticesSpinBox->value();
   double gradation = m_Controls->gradationSpinBox->value();
@@ -227,7 +227,7 @@ void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
 
   //CREATE SURFACE MAPPER
   
-   m_mapper = vtkPolyDataMapper::New();
+  /* m_mapper = vtkPolyDataMapper::New();
    m_mapper->SetInputData(surface2->GetVtkPolyData());
 
    vtkSmartPointer<vtkActor> m_actor = vtkSmartPointer<vtkActor>::New();
@@ -235,7 +235,7 @@ void QmitkMaxillofacialRemeshingWidget::OnRemeshButtonClicked()
 
    m_renderer->AddActor(m_actor);
 
-   m_mapper->Update();
+   m_mapper->Update();*/
 
   }
 

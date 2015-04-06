@@ -33,10 +33,32 @@ if(WIN32)
   option(MITK_USE_MICROBIRD_TRACKER "Enable support for Ascension MicroBird tracker hardware" OFF)
   if(MITK_USE_MICROBIRD_TRACKER)
    add_definitions(-DMITK_USE_MICROBIRD_TRACKER)
-   find_library(MITK_USE_MICROBIRD_TRACKER_LIB PCIBird3)
+   find_library(MITK_USE_MICROBIRD_TRACKER_LIB Bird)
    get_filename_component(MICROBIRD_TRACKER_API_DIR ${MITK_USE_MICROBIRD_TRACKER_LIB} PATH)
-   find_path(MITK_USE_MICROBIRD_TRACKER_INCLUDE_DIR PCIBird3.h ${MICROBIRD_TRACKER_API_DIR})
+   find_path(MITK_USE_MICROBIRD_TRACKER_INCLUDE_DIR Bird.h ${MICROBIRD_TRACKER_API_DIR})
   endif(MITK_USE_MICROBIRD_TRACKER)
   #End MicroBird Hardware
+  
+  #Begin Aurora Ascension Medsafe Hardware
+option(MITK_USE_ASCENSION_TRACKER "Enable support for Optitrack tracker hardware" OFF)
+  # Only if Aurora EM is enabled
+if(MITK_USE_ASCENSION_TRACKER)
+  add_definitions(-DMITK_USE_ASCENSION_TRACKER)
+  find_library(MITK_ASCENSION_TRACKER_LIB ATC3DGm DOC "Path which contains the Aurora Ascension Medsafe library.")
+  find_path(MITK_ASCENSION_TRACKER_INCLUDE_DIR ATC3DGm.h DOC  "Include directory of the Aurora Ascension Medsafe library.")
+  find_path(MITK_ASCENSION_TRACKER_LIB_DIR ATC3DGm.dll)
+  MITK_INSTALL(FILES ${MITK_ASCENSION_TRACKER_LIB_DIR}/ATC3DGm.dll  CONFIGURATIONS Release Debug)
+ENDIF(MITK_USE_ASCENSION_TRACKER)
+
+  #Begin Conoprobe Hardware
+option(MITK_USE_CONOPROBE_TRACKER "Enable support for Conoprobe hardware" OFF)
+  # Only if Aurora EM is enabled
+if(MITK_USE_CONOPROBE_TRACKER)
+  add_definitions(-DMITK_USE_CONOPROBE_TRACKER)
+  find_library(MITK_CONOPROBE_TRACKER_LIB Smart32 DOC "Path which contains the Conoprobe library.")
+  find_path(MITK_CONOPROBE_TRACKER_INCLUDE_DIR Smart32API.h DOC  "Include directory of the Conoprobe library.")
+  find_path(MITK_CONOPROBE_TRACKER_LIB_DIR Smart32.dll)
+  MITK_INSTALL(FILES ${MITK_CONOPROBE_TRACKER_LIB_DIR}/Smart32.dll  CONFIGURATIONS Release Debug)
+ENDIF(MITK_USE_CONOPROBE_TRACKER)
 
 endif(WIN32)

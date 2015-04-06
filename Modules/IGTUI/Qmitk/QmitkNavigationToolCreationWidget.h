@@ -65,6 +65,8 @@ class MitkIGTUI_EXPORT QmitkNavigationToolCreationWidget : public QWidget
     /** @return Returns the created tool. Returns NULL if no tool was created yet. */
     mitk::NavigationTool::Pointer GetCreatedTool();
 
+	void PreloadToolSettings(std::string ToolName, std::string CalibrationName, std::string ToolRepresentationName);
+	void AddToolFinished();
 
   signals:
 
@@ -79,6 +81,7 @@ class MitkIGTUI_EXPORT QmitkNavigationToolCreationWidget : public QWidget
     void OnCancel();
     void OnFinished();
     void OnLoadSurface();
+	void OnLoadSurface(std::string filename);
     void OnLoadCalibrationFile();
     void OnShowAdvancedOptions(bool state);
     void OnProcessDialogCloseRequest();
